@@ -5,7 +5,7 @@ def data_cleaning_and_missing_values(location_data, test_data, train_data):
     train_and_test_methods(test_data)
     train_and_test_methods(train_data)
     # location data
-    location_methods(location_data)
+    # location_methods(location_data)
 
 def train_and_test_methods(dataset):
     replace_missing_with_default_cases(dataset)

@@ -1,3 +1,4 @@
+from main import *
 
 def transform_location_data(location_data):
     temp = location_data.copy()

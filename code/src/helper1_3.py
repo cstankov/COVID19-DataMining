@@ -2,14 +2,8 @@ from main import *
 
 # 1.3 Find outliers 
 def find_outliers(location_data, test_data, train_data):
-    numerical_outliers(location_data)
     numerical_outliers(train_data)
-    # numerical_outliers(test_data)
-    categorical_outliers(location_data)
     categorical_outliers(train_data)
-    # categorical_outliers(test_data)
-    drop_neg_active(location_data)
-    remove_not_follow_active_formula(location_data)
 
 def numerical_outliers(dataset: pd.DataFrame):
     data_copy = dataset.copy()
@@ -44,15 +38,3 @@ def categorical_outliers(dataset: pd.DataFrame):
         print(score.value_counts())
         print(cols)
         print()
-
-# 1.3 Dealing with negative active cases outliers
-def drop_neg_active(location_data):
-    location_data = location_data.drop(location_data[location_data['Active'] < 0.0].index)
-    location_data.reset_index(drop=True, inplace=True)
-
-
-# 1.3 Dropping rows that dont follow this formula: Active = confrimed - deaths - recovered 
-def remove_not_follow_active_formula(location_data: pd.DataFrame):
-    location_data = location_data.drop(location_data[location_data['Active'] != (location_data['Confirmed'] - location_data['Deaths'] - location_data['Recovered'])].index)
-    location_data.reset_index(drop=True, inplace=True)
-
