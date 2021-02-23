@@ -74,6 +74,6 @@ def cases_join_locaction(dataset, location_data, is_test=False):
 
     merged_data = merged.copy()
     merged_data = standardizeColumns(merged_data, is_test)
-
+    # print(merged_data.isnull().sum(axis = 0))
     merged_data = imputeMissingValues(merged_data)
     return merged_data

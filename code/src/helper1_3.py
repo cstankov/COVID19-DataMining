@@ -1,8 +1,13 @@
 from main import *
 
 # 1.3 Find outliers 
-def find_outliers(location_data, test_data, train_data):
+def find_outliers(train_data):
+    print("=========Printing Outlier=========")
+
+    print("\n\nNumerical Data")
     numerical_outliers(train_data)
+
+    print("\n\nCategorical")
     categorical_outliers(train_data)
 
 def numerical_outliers(dataset: pd.DataFrame):

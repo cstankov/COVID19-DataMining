@@ -14,8 +14,10 @@ def convertLocDataToFloats(location_data):
 
 
 def transform_location_data(location_data):
-    
+
     convertLocDataToFloats(location_data)
+    location_data['Province_State'] = location_data['Province_State'].fillna('unknown')
+    
     temp = location_data.copy()
 
     temp['Country_Region'] = temp.apply(lambda x: 'United States'if x['Country_Region'] == 'US' else x['Country_Region'], axis = 1)
@@ -23,6 +25,7 @@ def transform_location_data(location_data):
     #['province'] = dataset.apply(lambda x: "Puerto Rico" if x['country'] == "Puerto Rico" else x['province'], axis=1 )
     temp['Country_Region'] = temp['Country_Region'].str.strip()
     temp['Province_State'] = temp['Province_State'].str.strip()
+    
     # temp.loc[(temp['Country_Region'] == 'US'), 'Country_Region'] = 'United States'
     temp['Combined_Key'] = temp['Province_State'] + ', ' + temp['Country_Region']
 
@@ -51,7 +54,7 @@ def transform_location_data(location_data):
     temp2['Active'] = (temp2['Confirmed'] - temp2['Deaths'] - temp2['Recovered'])
 
     # Calculate incidence rate = confirmed / 100000
-    temp2['Incidence_Rate'] = (temp2['Confirmed'] / 100000)
+    temp2['Incidence_Rate'] = (temp2['Confirmed'] / 100000.0)
 
     # calculate fat ratio = deaths/confirmed * 100
     temp2['Case-Fatality_Ratio'] = (temp2['Deaths'] / temp2['Confirmed']) * 100

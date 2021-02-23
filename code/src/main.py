@@ -19,7 +19,7 @@ def main():
     data_cleaning_and_missing_values(location_data, test_data, train_data)
     print("Finished 1.2")
     #1.3
-    # find_outliers(location_data, test_data, train_data)
+    find_outliers(train_data)
     print("Finished 1.3")
     #1.4
     location_data = transform_location_data(location_data)
