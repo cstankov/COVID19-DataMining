@@ -12,7 +12,20 @@ def loadAllData():
 def saveData(location_data, test_data, train_data):
     BASE_PATH = os.path.dirname(__file__)
     BASE_DATA = '../results/'
-    location_data.to_csv(getRelPath(BASE_PATH, BASE_DATA, 'location_transformed.csv'))
+    loc_path = getRelPath(BASE_PATH, BASE_DATA, 'location_transformed.csv')
+    test_path = getRelPath(BASE_PATH, BASE_DATA, 'cases_test_processed.csv')
+    train_path = getRelPath(BASE_PATH, BASE_DATA, 'cases_train_processed.csv')
+
+    if os.path.exists(loc_path):
+        os.remove(loc_path)
+
+    if os.path.exists(train_path):
+        os.remove(train_path)
+
+    if os.path.exists(test_path):
+        os.remove(test_path)
+
+    location_data.to_csv(loc_path)
     test_data.to_csv(getRelPath(BASE_PATH, BASE_DATA, 'cases_test_processed.csv'))
     train_data.to_csv(getRelPath(BASE_PATH, BASE_DATA, 'cases_train_processed.csv'))
 

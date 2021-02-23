@@ -19,10 +19,10 @@ def main():
     data_cleaning_and_missing_values(location_data, test_data, train_data)
     print("Finished 1.2")
     #1.3
-    find_outliers(location_data, test_data, train_data)
+    # find_outliers(location_data, test_data, train_data)
     print("Finished 1.3")
     #1.4
-    transform_location_data(location_data)
+    location_data = transform_location_data(location_data)
     print("Finished 1.4")
     #1.5
     test_data_processed, train_data_processed = joining_datasets(location_data, test_data, train_data)

@@ -4,8 +4,6 @@ def data_cleaning_and_missing_values(location_data, test_data, train_data):
     # Case and train data
     train_and_test_methods(test_data)
     train_and_test_methods(train_data)
-    # location data
-    # location_methods(location_data)
 
 def train_and_test_methods(dataset):
     replace_missing_with_default_cases(dataset)
@@ -15,14 +13,7 @@ def train_and_test_methods(dataset):
     impute_missing_countries_cases(dataset)
     impute_missing_provinces_case(dataset)
     convertDataToFloatsForCases(dataset)
-
-def location_methods(location_data):
-    impute_missing_provinces_loc(location_data)
-    impute_missing_lat_long_loc(location_data)
-    impute_missing_active_loc(location_data)
-    impute_missing_caseFatal_loc(location_data)
-    impute_missing_incidentRate_loc(location_data)
-    convertLocDataToFloats(location_data)
+    train_Peurto_Rico_Fix(dataset)
 
 #### CASE TRAIN AND CASE TEST METHODS ####
 
@@ -125,86 +116,7 @@ def convertDataToFloatsForCases(dataset):
     dataset['longitude'] = dataset['longitude'].astype(float)
     dataset['age'] = dataset['age'].astype(int)
 
-########### LOCATION DATA METHODS ###########
 
-def impute_missing_provinces_loc(location_data):
-    # Impute missing province states for location_data
-    # Lat long pair for certain province_states/places are unique hence we cannot guess province (replaced with unknown)
-    temp = location_data.copy()
-    geolocator = Nominatim(user_agent="http") 
-
-    temp['Lat'] = temp.apply(lambda x: (geolocator.geocode(x['Country_Region'])).latitude if pd.isnull(x['Lat']) else int(x['Lat']), axis=1)
-    temp['Long_'] = temp.apply(lambda x: (geolocator.geocode(x['Country_Region'])).longitude if pd.isnull(x['Long_']) else int(x['Long_']), axis=1)
-
-    temp['Lat'] = temp['Lat'].astype(str)
-    temp['Long_'] = temp['Long_'].astype(str)
-
-    temp['lat-long'] = list(zip(temp.Lat, temp.Long_))
-
-    g = temp.dropna(subset=['Province_State']).drop_duplicates('lat-long').set_index('lat-long')['Province_State']
-    temp['Province_State'] = temp['Province_State'].fillna(temp['lat-long'].map(g))
-
-    location_data['Province_State'] = temp['Province_State']
-
-    location_data['Province_State'] = location_data['Province_State'].replace(np.nan, 'unknown')
-
-def impute_missing_lat_long_loc(location_data):
-    # impute lat and long for location data
-    geolocator = Nominatim(user_agent="http") 
-    h = location_data[(location_data['Lat'].isna()) & (location_data['Province_State'] != 'unknown')]
-    h['Lat'] = h['Province_State'].apply(lambda x: (geolocator.geocode(x).latitude))
-    h['Long_'] = h['Province_State'].apply(lambda x: (geolocator.geocode(x).longitude))
-    for row in h.index:
-        location_data.loc[row, 'Lat'] = h.loc[row, 'Lat']
-        location_data.loc[row, 'Long_'] = h.loc[row, 'Long_']
-
-    h = location_data[(location_data['Lat'].isna())]
-    h['Lat'] = h['Country_Region'].apply(lambda x: (geolocator.geocode(x).latitude))
-    h['Long_'] = h['Country_Region'].apply(lambda x: (geolocator.geocode(x).longitude))
-    for row in h.index:
-        location_data.loc[row, 'Lat'] = h.loc[row, 'Lat']
-        location_data.loc[row, 'Long_'] = h.loc[row, 'Long_']
-    
-def impute_missing_active_loc(location_data):
-    # Impute missing Active cases for location_data
-    # Active = confirmed - deaths - recovered -- went negative so set to 0
-    location_data['Active'] = location_data['Active'].replace(np.nan, '0')
-
-
-def impute_missing_caseFatal_loc(location_data):
-    # Fatality ratio = (deaths / confirmed) x 100
-    location_data['Confirmed'] = location_data['Confirmed'].astype(float)
-    location_data['Deaths'] = location_data['Deaths'].astype(float)
-    location_data.loc[location_data['Case-Fatality_Ratio'].isna(), 'Case-Fatality_Ratio'] = (location_data['Deaths']/location_data['Confirmed']) * 100
-    location_data['Case-Fatality_Ratio'] = location_data['Case-Fatality_Ratio'].replace(np.nan, 0.0)
-
-def impute_missing_incidentRate_loc(location_data):
-    # make mapping of combined key to each incident rate 
-    # make different mapping for mean and combined key 
-    # assign
-    temp = location_data.copy()
-    temp['Province_State'] = temp['Province_State'].str.strip()
-    temp['Country_Region'] = temp['Country_Region'].str.strip()
-    temp['Combined_Key'] = temp['Province_State'] + ', ' + temp['Country_Region'] 
-
-    h = temp.groupby('Combined_Key', as_index=False)['Incidence_Rate'].mean()
-    g = h.dropna(subset=['Incidence_Rate']).drop_duplicates('Combined_Key').set_index('Combined_Key')['Incidence_Rate']
-    temp['Incidence_Rate'] = temp['Incidence_Rate'].fillna(temp['Combined_Key'].map(g))
-
-    temp['Confirmed'] = temp['Confirmed'].astype(float)
-    temp['Incidence_Rate'] = temp['Incidence_Rate'].astype(float)
-    temp['Incidence_Rate'] = temp.apply(lambda x: x['Confirmed'] / 100000.0  if pd.isnull(x['Incidence_Rate']) else x['Incidence_Rate'], axis=1)
-
-    location_data['Incidence_Rate'] = temp['Incidence_Rate']
-    location_data['Combined_Key'] = temp['Combined_Key']
-
-#converting location data values
-def convertLocDataToFloats(location_data):
-    location_data['Lat'] = location_data['Lat'].astype(float)
-    location_data['Long_'] = location_data['Long_'].astype(float)
-    location_data['Confirmed'] = location_data['Confirmed'].astype(float)
-    location_data['Deaths'] = location_data['Deaths'].astype(float)
-    location_data['Recovered'] = location_data['Recovered'].astype(float)
-    location_data['Active'] = location_data['Active'].astype(float)
-    location_data['Incidence_Rate'] = location_data['Incidence_Rate'].astype(float)
-    location_data['Case-Fatality_Ratio'] = location_data['Case-Fatality_Ratio'].astype(float)
+def train_Peurto_Rico_Fix(dataset):
+    dataset['province'] = dataset.apply(lambda x: "Puerto Rico" if x['country'] == "Puerto Rico" else x['province'], axis=1 )
+    dataset['country'] =  dataset.apply(lambda x: "United States" if x['country'] =="Puerto Rico" else x['country'], axis=1 )

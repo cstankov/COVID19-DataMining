@@ -3,6 +3,7 @@ from main import *
 def joining_datasets(location_data, test_data, train_data):
     test_data_processed = cases_join_locaction(test_data, location_data, True)
     train_data_processed = cases_join_locaction(train_data, location_data)
+    # test_data_processed = train_data_processed
     return test_data_processed, train_data_processed
 
 
@@ -51,6 +52,7 @@ def imputeMissingValues(dataset):
     dataset['Active'] = dataset['Active'].replace(np.nan, -1.0)
     dataset['Incidence_Rate'] = dataset['Incidence_Rate'].replace(np.nan, -1.0)
     dataset['Case-Fatality_Ratio'] = dataset['Case-Fatality_Ratio'].replace(np.nan, -1.0)
+    
     return dataset
 
 
@@ -62,7 +64,6 @@ def cases_join_locaction(dataset, location_data, is_test=False):
     temp_loc = location_data.copy()
 
     merged = pd.merge(temp_train,temp_loc, on=['Combined_Key'], how='left')
-
     
     merged = fixNan(merged)
 
@@ -73,7 +74,6 @@ def cases_join_locaction(dataset, location_data, is_test=False):
 
     merged_data = merged.copy()
     merged_data = standardizeColumns(merged_data, is_test)
+
     merged_data = imputeMissingValues(merged_data)
-        
-    merged_data_missing = merged_data.isnull().sum(axis = 0)
     return merged_data
