@@ -15,7 +15,11 @@ def splitForModel(train_data, val_data, return_numpy = True, convert_categorical
         le = preprocessing.LabelEncoder()
         train_cpy = train_cpy.apply(le.fit_transform)
         val_cpy = val_cpy.apply(le.fit_transform)
-
+        le_name_mapping = dict(zip(le.classes_, le.transform(le.classes_)))
+        print("Mapping:")
+        print(le_name_mapping)
+        print("\n\n")
+        
     x_train = train_cpy.loc[:, train_cpy.columns != 'Outcome']
     y_train = train_cpy['Outcome']
     x_val = val_cpy.loc[:, val_cpy.columns != 'Outcome']
@@ -29,14 +33,21 @@ def splitForModel(train_data, val_data, return_numpy = True, convert_categorical
 
     return x_train, y_train, x_val, y_val    
 
-def outputConfusionMatrixMetrics(confusion_mat):
-    #From https://stackoverflow.com/questions/31324218/scikit-learn-how-to-obtain-true-positive-true-negative-false-positive-and-fal
-    FP = confusion_mat.sum(axis=0) - np.diag(confusion_mat)  
-    FN = confusion_mat.sum(axis=1) - np.diag(confusion_mat)
-    TP = np.diag(confusion_mat)
-    TN = confusion_mat.sum() - (FP + FN + TP)
 
-    # Overall accuracy
+def printMetrics(confusion_mat, label_number):
+    TN, FP, FN, TP = confusion_mat.ravel()
+    if label_number == 0:
+        print("Deceased:")
+    elif label_number == 1:
+        print("Hospitalized:")
+    elif label_number == 2:
+        print("Nonhospitalized:")
+    elif label_number == 3:
+        print("Recovered:")
+    else:
+        print("Invalid label number. Enter number between 0 and 3. Refer to the map in code")
+
+
     acc = (TP+TN)/(TP+FP+FN+TN)
     recall = TP /(TP + FN)
     prec = TP / (TP + FP)
@@ -45,7 +56,44 @@ def outputConfusionMatrixMetrics(confusion_mat):
     print("Accuracy: ", acc)
     print("Precision: ", prec)
     print("Recall: ", recall)
-    print("F_One: ", f_one_score)
+    print("F_One: ", f_one_score)       
+    print("\n\n")     
+
+
+
+def outputConfusionMatrixMetrics(confusion_mat, unique_labels):
+    #From https://stackoverflow.com/questions/31324218/scikit-learn-how-to-obtain-true-positive-true-negative-false-positive-and-fal
+    # print(unique_labels)
+    print("CF:\n", confusion_mat)
+    print("\n\n")
+
+    '''
+    0 --> deceased
+    1 --> hospit..
+    2 --> nonhosp...
+    3 --> recovered
+
+    Confusion Mat:
+    TP  FN
+    FP  TN
+    '''
+
+    # FP = confusion_mat.sum(axis=0) - np.diag()  
+    # FN = confusion_mat.sum(axis=1) - np.diag(confusion_mat)
+    # TP = np.diag(confusion_mat)
+    # TN = confusion_mat.sum() - (FP + FN + TP)
+
+    
+    cf_dec = confusion_mat[0]
+    cf_hosp = confusion_mat[1]
+    cf_nonhosp = confusion_mat[2]
+    cf_rec = confusion_mat[3]
+
+    printMetrics(cf_dec, 0)
+    printMetrics(cf_hosp, 1)
+    printMetrics(cf_nonhosp, 2)
+    printMetrics(cf_rec, 3)
+
 
 def loadModel(ModelFileName):
     # From https://stackabuse.com/scikit-learn-save-and-restore-models/
@@ -70,7 +118,7 @@ def adaBoostModelSave(train_data, val_data):
 
     print("Running Ada...")
     ada = AdaBoostClassifier(base_estimator = DecisionTreeClassifier(max_depth=2),
-                            algorithm="SAMME.R", n_estimators = 200, learning_rate = 0.2)
+                            algorithm="SAMME.R", n_estimators = 5, learning_rate = 1)
     model = ada.fit(x_train, y_train)
  
     print("Saving AdaBoost Model...")
@@ -85,8 +133,10 @@ def runAdaBoostingClassifier(train_data, val_data):
     
     y_pred = model.predict(x_val)
 
-    cf = confusion_matrix(y_val, y_pred)
-    outputConfusionMatrixMetrics(cf)
+    unique_labels = np.unique(y_val)
+
+    cf = multilabel_confusion_matrix(y_val, y_pred, labels = unique_labels)
+    outputConfusionMatrixMetrics(cf, unique_labels)
 
 ################ LINEAR SVC MODEL ################
 

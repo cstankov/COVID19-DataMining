@@ -10,6 +10,7 @@ from datetime import datetime
 from geopy.geocoders import Nominatim
 from scipy.stats import zscore
 from sklearn.metrics import confusion_matrix
+from sklearn.metrics import multilabel_confusion_matrix
 
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import *
@@ -53,11 +54,13 @@ def main():
     location_data, test_data_processed, train_data_processed = loadPreprocessedData()
     train_data, val_data = split_train_val(train_data_processed)
 
-    # adaBoostModelSave(train_data, val_data)
-    linearSVMModelSave(train_data, val_data)
+    # ADA
+    adaBoostModelSave(train_data, val_data)
+    runAdaBoostingClassifier(train_data, val_data)
 
-    # runAdaBoostingClassifier(train_data, val_data)
-    runLinearSVCClassifier(train_data, val_data)
+    # Linear SVC
+    # linearSVMModelSave(train_data, val_data)
+    # runLinearSVCClassifier(train_data, val_data)
 
 
 
