@@ -5,13 +5,12 @@ import pickle
 
 import matplotlib.pyplot as plt
 import statistics
-from lightgbm import LGBMClassifier #try
-from catboost import CatBoostClassifier #try
 
 
 from datetime import datetime
 from geopy.geocoders import Nominatim
 from scipy.stats import zscore
+from sklearn.metrics import confusion_matrix
 
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import *
@@ -48,7 +47,8 @@ def main():
     location_data, test_data_processed, train_data_processed = loadPreprocessedData()
     train_data, val_data = split_train_val(train_data_processed)
 
-    adaBoostModel(train_data, val_data)
+    adaBoostModelSave(train_data, val_data)
+    runAdaBoostingClassifier(train_data, val_data)
 
 
 
