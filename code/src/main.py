@@ -6,7 +6,6 @@ import pickle
 import matplotlib.pyplot as plt
 import statistics
 
-
 from datetime import datetime
 from geopy.geocoders import Nominatim
 from scipy.stats import zscore
@@ -17,6 +16,13 @@ from sklearn.ensemble import *
 from sklearn import metrics
 from sklearn import preprocessing
 from sklearn.tree import *
+
+from sklearn.svm import LinearSVC
+from sklearn.pipeline import make_pipeline
+from sklearn.datasets import make_classification
+from sklearn.datasets import make_multilabel_classification
+from sklearn.multiclass import OneVsRestClassifier
+from sklearn.calibration import CalibratedClassifierCV
 
 from dataHandler import*
 from helper1_2 import *
@@ -47,8 +53,11 @@ def main():
     location_data, test_data_processed, train_data_processed = loadPreprocessedData()
     train_data, val_data = split_train_val(train_data_processed)
 
-    adaBoostModelSave(train_data, val_data)
-    runAdaBoostingClassifier(train_data, val_data)
+    # adaBoostModelSave(train_data, val_data)
+    linearSVMModelSave(train_data, val_data)
+
+    # runAdaBoostingClassifier(train_data, val_data)
+    runLinearSVCClassifier(train_data, val_data)
 
 
 

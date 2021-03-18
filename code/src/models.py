@@ -2,18 +2,9 @@ from main import *
 from dataHandler import *
 
 pkl_ada_filename = "ada_pickle_model.pkl"
+pkl_linearSVC_filename = "linearSVC_pickle_model.pkl"
 BASE_PATH = os.path.dirname(__file__)
-BASE_DATA = '../models/'
-
-def loadAda():
-    # From https://stackabuse.com/scikit-learn-save-and-restore-models/
-    file_pth = os.path.relpath(BASE_DATA + pkl_ada_filename, BASE_PATH)
-    pickle_model = None
-    print("Loading AdaBoost Model")
-    with open(file_pth, 'rb') as file:
-        pickle_model = pickle.load(file)
-
-    return pickle_model    
+BASE_DATA = '../models/'   
 
 def splitForModel(train_data, val_data, return_numpy = True, convert_categorical = True):
     print("Splitting Model...")
@@ -38,20 +29,10 @@ def splitForModel(train_data, val_data, return_numpy = True, convert_categorical
 
     return x_train, y_train, x_val, y_val    
 
-def runAdaBoostingClassifier(train_data, val_data):
-    x_train, y_train, x_val, y_val = splitForModel(train_data, val_data)
-    model = loadAda()
-    
-    y_pred = model.predict(x_val)
-
-    cf = confusion_matrix(y_val, y_pred)
-    outputConfusionMatrixMetrics(cf)
-
-
 def outputConfusionMatrixMetrics(confusion_mat):
     #From https://stackoverflow.com/questions/31324218/scikit-learn-how-to-obtain-true-positive-true-negative-false-positive-and-fal
-    FP = confusion_mat.sum(axis=0) - np.diag(cf)  
-    FN = confusion_mat.sum(axis=1) - np.diag(cf)
+    FP = confusion_mat.sum(axis=0) - np.diag(confusion_mat)  
+    FN = confusion_mat.sum(axis=1) - np.diag(confusion_mat)
     TP = np.diag(confusion_mat)
     TN = confusion_mat.sum() - (FP + FN + TP)
 
@@ -66,7 +47,21 @@ def outputConfusionMatrixMetrics(confusion_mat):
     print("Recall: ", recall)
     print("F_One: ", f_one_score)
 
+def loadModel(ModelFileName):
+    # From https://stackabuse.com/scikit-learn-save-and-restore-models/
+    file_pth = os.path.relpath(BASE_DATA + ModelFileName, BASE_PATH)
+    pickle_model = None
 
+    if ModelFileName == pkl_ada_filename:
+        print("Loading Ada Model...")
+    elif ModelFileName == pkl_linearSVC_filename:
+        print("Loading SVC Model...")
+
+    with open(file_pth, 'rb') as file:
+        pickle_model = pickle.load(file)
+    return pickle_model 
+
+################ ADA BOOST MODEL ################
 
 def adaBoostModelSave(train_data, val_data):
     # from https://www.datacamp.com/community/tutorials/adaboost-classifier-python
@@ -84,4 +79,38 @@ def adaBoostModelSave(train_data, val_data):
     with open(file_pth, 'wb') as file:
         pickle.dump(model, file)          
 
+def runAdaBoostingClassifier(train_data, val_data):
+    x_train, y_train, x_val, y_val = splitForModel(train_data, val_data)
+    model = loadModel(pkl_ada_filename)
+    
+    y_pred = model.predict(x_val)
 
+    cf = confusion_matrix(y_val, y_pred)
+    outputConfusionMatrixMetrics(cf)
+
+################ LINEAR SVC MODEL ################
+
+def linearSVMModelSave(train_data, val_data):
+    # from https://scikit-learn.org/stable/modules/generated/sklearn.svm.LinearSVC.html
+    # from https://stackoverflow.com/questions/31617530/multiclass-linear-svm-in-python-that-return-probability
+    x_train, y_train, x_val, y_val = splitForModel(train_data, val_data)
+    
+    print("Running linear SVC...")
+    cl = CalibratedClassifierCV(LinearSVC(C=1, dual=False, max_iter=10000))
+    clf = OneVsRestClassifier(cl)
+    model = clf.fit(x_train, y_train)
+
+    print("Saving linear SVC Model...")
+    # From https://stackabuse.com/scikit-learn-save-and-restore-models/
+    file_pth = os.path.relpath(BASE_DATA + pkl_linearSVC_filename, BASE_PATH)
+    with open(file_pth, 'wb') as file:
+        pickle.dump(model, file)  
+
+def runLinearSVCClassifier(train_data, val_data):
+    x_train, y_train, x_val, y_val = splitForModel(train_data, val_data)
+    model = loadModel(pkl_ada_filename)
+
+    y_pred = model.predict(x_val)
+
+    cf = confusion_matrix(y_val, y_pred)
+    outputConfusionMatrixMetrics(cf)
