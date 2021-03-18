@@ -30,9 +30,15 @@ def adaBoostModel(train_data, val_data):
     #                            n_estimators=50, 
     #                            learning_rate=1, 
     #                            random_state = 0)
-    ada = AdaBoostClassifier(base_estimator = DecisionTreeClassifier(max_depth=3),
-                               algorithm="SAMME.R", n_estimators = 200, learning_rate = 1)
-    model = ada.fit(x_train, y_train)
+    # ada = AdaBoostClassifier(base_estimator = DecisionTreeClassifier(max_depth=3),
+    #                            algorithm="SAMME.R", n_estimators = 200, learning_rate = 1)
+    # model = ada.fit(x_train, y_train)
+
+    lgbm = LGBMClassifier(n_estimators = 100, learning_rate = 1)
+    model = lgbm.fit(x_train, y_train)
+
+    # cbc = CatBoostClassifier(verbose=0, n_estimators=200,)
+    # model = cbc.fit(x_train, y_train)
     
     # grad = GradientBoostingRegressor(n_estimators = 100, learning_rate = 1)
     # grad = GradientBoostingClassifier()

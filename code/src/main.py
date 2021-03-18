@@ -3,6 +3,10 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 import statistics
+from lightgbm import LGBMClassifier #try
+from catboost import CatBoostClassifier #try
+
+
 from datetime import datetime
 from geopy.geocoders import Nominatim
 from scipy.stats import zscore
