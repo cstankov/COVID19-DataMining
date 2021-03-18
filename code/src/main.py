@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 import os
+import pickle
+
 import matplotlib.pyplot as plt
 import statistics
 from lightgbm import LGBMClassifier #try
@@ -47,6 +49,7 @@ def main():
     train_data, val_data = split_train_val(train_data_processed)
 
     adaBoostModel(train_data, val_data)
+
 
 
 if __name__ == "__main__":

@@ -1,67 +1,56 @@
 from main import *
 
 pkl_ada_filename = "ada_pickle_model.pkl"
+BASE_PATH = os.path.dirname(__file__)
+BASE_DATA = '../models/'
 
 def loadAda():
-    return
+    # From https://stackabuse.com/scikit-learn-save-and-restore-models/
+    file_pth = getRelPath(BASE_PATH, BASE_DATA, pkl_ada_filename)
+    pickle_model = None
+    with open(file_pth, 'rb') as file:
+        pickle_model = pickle.load(file)
 
+    return pickle_model    
 
-def adaBoostModel(train_data, val_data):
-    # data_cpy = train_data.copy()
-    # from https://www.datacamp.com/community/tutorials/adaboost-classifier-python
+def splitForModel(train_data, val_data, return_numpy = True):
     le = preprocessing.LabelEncoder()
     train_cpy = train_data.copy()
     val_cpy = val_data.copy()
 
     train_cpy = train_cpy.apply(le.fit_transform)
     val_cpy = val_cpy.apply(le.fit_transform)
-    # print(train_cpy.columns)
+
     x_train = train_cpy.loc[:, train_cpy.columns != 'Outcome']
     y_train = train_cpy['Outcome']
     x_val = val_cpy.loc[:, val_cpy.columns != 'Outcome']
     y_val = val_cpy['Outcome']
 
-    x_train = x_train.to_numpy()
-    y_train = y_train.to_numpy()
-    x_val = x_val.to_numpy()
-    y_val = y_val.to_numpy()
-   
-    # ada = AdaBoostClassifier(base_estimator = DecisionTreeClassifier(max_depth=3),
-    #                            algorithm="SAMME.R",
-    #                            n_estimators=50, 
-    #                            learning_rate=1, 
-    #                            random_state = 0) # 55 to 59 percent
-   
-    # 57 to 62 percent
-    # ada = AdaBoostClassifier(base_estimator = DecisionTreeClassifier(max_depth=2),
-    #                            algorithm="SAMME.R", n_estimators = 200, learning_rate = 0.2)
-    # model = ada.fit(x_train, y_train)
-    sum_acc = 0
-    for i in range(0, 5): 
-        # 40 to 50 percent
-        # lgbm = LGBMClassifier(n_estimators = 100, 
-        #                     learning_rate = 0.7)
-        # model = lgbm.fit(x_train, y_train) 
+    if(return_numpy == True):
+        x_train = x_train.to_numpy()
+        y_train = y_train.to_numpy()
+        x_val = x_val.to_numpy()
+        y_val = y_val.to_numpy()
 
-        # percent
-        ada = AdaBoostClassifier(base_estimator = DecisionTreeClassifier(max_depth=2),
-                               algorithm="SAMME.R", n_estimators = 200, learning_rate = 0.2)
-        model = ada.fit(x_train, y_train)
+    return x_train, y_train, x_val, y_val    
 
-        #56 percent
-        # ada = AdaBoostClassifier(base_estimator = DecisionTreeClassifier(max_depth=2),
-        #                        algorithm="SAMME.R", n_estimators = 50, learning_rate = 1, random_state = 0)
-        # model = ada.fit(x_train, y_train)
-
-        # 45.3 percent
-        # cbc = CatBoostClassifier(depth=10, iterations= 500, l2_leaf_reg= 9, learning_rate= 0.15)
-        # model = cbc.fit(x_train, y_train)
-
-
-        y_pred = model.predict(x_val)
-        sum_acc += metrics.accuracy_score(y_val, y_pred)
+def runAdaBoostingClassifier(train_data, val_data):
+    x_train, y_train, x_val, y_val = splitForModel(train_data, val_data)
+    model = loadAda()
     
-    avg_acc = sum_acc / 5
 
-    print("Average Accuracy: ", avg_acc)                    
+
+
+def adaBoostModel(train_data, val_data):
+    # from https://www.datacamp.com/community/tutorials/adaboost-classifier-python
+ 
+    x_train, y_train, x_val, y_val = splitForModel(train_data, val_data)
+    ada = AdaBoostClassifier(base_estimator = DecisionTreeClassifier(max_depth=2),
+                            algorithm="SAMME.R", n_estimators = 200, learning_rate = 0.2)
+    model = ada.fit(x_train, y_train)
+ 
+    # From https://stackabuse.com/scikit-learn-save-and-restore-models/
+    file_pth = getRelPath(BASE_PATH, BASE_DATA, pkl_ada_filename)
+    with open(file_pth, 'wb') as file:
+        pickle.dump(model, file)                
 
