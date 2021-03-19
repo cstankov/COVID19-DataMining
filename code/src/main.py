@@ -16,6 +16,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import *
 from sklearn import metrics
 from sklearn import preprocessing
+from sklearn.model_selection import GridSearchCV
 from sklearn.tree import *
 
 from sklearn.svm import LinearSVC
@@ -24,6 +25,7 @@ from sklearn.datasets import make_classification
 from sklearn.datasets import make_multilabel_classification
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.calibration import CalibratedClassifierCV
+from sklearn.metrics import accuracy_score
 
 from dataHandler import*
 from helper1_2 import *
@@ -55,8 +57,12 @@ def main():
     train_data, val_data = split_train_val(train_data_processed)
 
     # ADA
+    # Run Ada 2.2 and 2.3
     adaBoostModelSave(train_data, val_data)
     runAdaBoostingClassifier(train_data, val_data)
+    
+    # Ada Overfitting Check 2.4
+    overfitting_check(train_data, val_data)
 
     # Linear SVC
     # linearSVMModelSave(train_data, val_data)

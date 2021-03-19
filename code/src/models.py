@@ -15,10 +15,10 @@ def splitForModel(train_data, val_data, return_numpy = True, convert_categorical
         le = preprocessing.LabelEncoder()
         train_cpy = train_cpy.apply(le.fit_transform)
         val_cpy = val_cpy.apply(le.fit_transform)
-        le_name_mapping = dict(zip(le.classes_, le.transform(le.classes_)))
-        print("Mapping:")
-        print(le_name_mapping)
-        print("\n\n")
+        # le_name_mapping = dict(zip(le.classes_, le.transform(le.classes_)))
+        # print("Mapping:")
+        # print(le_name_mapping)
+        # print("\n\n")
         
     x_train = train_cpy.loc[:, train_cpy.columns != 'Outcome']
     y_train = train_cpy['Outcome']
@@ -36,6 +36,7 @@ def splitForModel(train_data, val_data, return_numpy = True, convert_categorical
 
 def printMetrics(confusion_mat, label_number):
     TN, FP, FN, TP = confusion_mat.ravel()
+
     if label_number == 0:
         print("Deceased:")
     elif label_number == 1:
@@ -46,7 +47,6 @@ def printMetrics(confusion_mat, label_number):
         print("Recovered:")
     else:
         print("Invalid label number. Enter number between 0 and 3. Refer to the map in code")
-
 
     acc = (TP+TN)/(TP+FP+FN+TN)
     recall = TP /(TP + FN)
@@ -77,12 +77,6 @@ def outputConfusionMatrixMetrics(confusion_mat, unique_labels):
     TP  FN
     FP  TN
     '''
-
-    # FP = confusion_mat.sum(axis=0) - np.diag()  
-    # FN = confusion_mat.sum(axis=1) - np.diag(confusion_mat)
-    # TP = np.diag(confusion_mat)
-    # TN = confusion_mat.sum() - (FP + FN + TP)
-
     
     cf_dec = confusion_mat[0]
     cf_hosp = confusion_mat[1]
@@ -110,17 +104,85 @@ def loadModel(ModelFileName):
     return pickle_model 
 
 ################ ADA BOOST MODEL ################
+def overfitting_check(train_data, val_data):
+    print("Checking for Overfitting...")
+    #From https://machinelearningmastery.com/overfitting-machine-learning-models/
+    x_train, y_train, x_val, y_val = splitForModel(train_data, val_data)
+    train_scores, test_scores = list(), list()
+
+    depth = [None, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+    for d in depth:
+        DTC = DecisionTreeClassifier(random_state = 0, max_features = "auto", class_weight = "balanced",max_depth = d)
+        # param_grid = {"base_estimator__criterion" : ["entropy"],
+        #         "base_estimator__splitter" :   ["best"],
+        #         "n_estimators": [200],
+        #         "learning_rate": [1] 
+        #         } 
+        ada = AdaBoostClassifier(base_estimator = DTC)
+        # grid_search_ada = GridSearchCV(ada, param_grid=param_grid)
+        model = ada.fit(x_train, y_train)
+        # evaluate on the train dataset
+        train_y_pred = model.predict(x_train)
+        train_acc = accuracy_score(y_train, train_y_pred)
+        train_scores.append(train_acc)
+        # evaluate on the test dataset
+        test_y_pred = model.predict(x_val)
+        test_acc = accuracy_score(y_val, test_y_pred)
+        test_scores.append(test_acc)
+        # summarize progress
+        if d == None:
+            print('>Max Depth: %s, train: %.3f, test: %.3f' % ('None', train_acc, test_acc))
+        else:
+            print('>Max Depth: %d, train: %.3f, test: %.3f' % (d, train_acc, test_acc))
+    
+    plt.plot(depth, train_scores, '-o', label='Train')
+    plt.plot(depth, test_scores, '-o', label='Test')
+    plt.title("AdaBoost Overfitting")
+    plt.xlabel("Maximum Depth of Tree")
+    plt.ylabel("Accuracy")
+    plt.legend()
+    plt.show()
+
+
 
 def adaBoostModelSave(train_data, val_data):
     # from https://www.datacamp.com/community/tutorials/adaboost-classifier-python
  
     x_train, y_train, x_val, y_val = splitForModel(train_data, val_data)
-
     print("Running Ada...")
-    ada = AdaBoostClassifier(base_estimator = DecisionTreeClassifier(max_depth=2),
-                            algorithm="SAMME.R", n_estimators = 5, learning_rate = 1)
-    model = ada.fit(x_train, y_train)
+
+    # Milestone3 
+    # Used GridSearchCV to get best parameters and then made the best_parameter_grid
+    # uncomment to run the posible parameter 
+    # idea from https://stackoverflow.com/questions/32210569/using-gridsearchcv-with-adaboost-and-decisiontreeclassifier
+    # DTC = DecisionTreeClassifier(random_state = 0, max_features = "auto", class_weight = "balanced",max_depth = None)
+    # param_grid = {"base_estimator__criterion" : ["gini", "entropy"],
+    #           "base_estimator__splitter" :   ["best", "random"],
+    #           "n_estimators": [50, 100, 150, 200],
+    #           "learning_rate": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1] #best --> not this
+    #          } 
+    # ada = AdaBoostClassifier(base_estimator = DTC)
+    # grid_search_ada = GridSearchCV(ada, param_grid=param_grid)
+    # model = grid_search_ada.fit(x_train, y_train)
+    # print("Best Parameters: ", grid_search_ada.best_params_)
  
+    # using best parameters
+    # DTC = DecisionTreeClassifier(random_state = 0, max_features = "auto", class_weight = "balanced",max_depth = 5)
+    # param_grid = {"base_estimator__criterion" : ["entropy"],
+    #           "base_estimator__splitter" :   ["best"],
+    #           "n_estimators": [200],
+    #           "learning_rate": [1] 
+    #          } 
+    # ada = AdaBoostClassifier(base_estimator = DTC)
+    # grid_search_ada = GridSearchCV(ada, param_grid=param_grid)
+    # model = grid_search_ada.fit(x_train, y_train)
+
+
+    # Milestone2:
+    DTC = DecisionTreeClassifier()
+    ada = AdaBoostClassifier(base_estimator = DTC)
+    model = ada.fit(x_train, y_train)
     print("Saving AdaBoost Model...")
     # From https://stackabuse.com/scikit-learn-save-and-restore-models/
     file_pth = os.path.relpath(BASE_DATA + pkl_ada_filename, BASE_PATH)
@@ -132,6 +194,7 @@ def runAdaBoostingClassifier(train_data, val_data):
     model = loadModel(pkl_ada_filename)
     
     y_pred = model.predict(x_val)
+    print("y_pred unique:", np.unique(y_pred))
 
     unique_labels = np.unique(y_val)
 
