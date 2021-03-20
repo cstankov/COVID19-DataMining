@@ -11,6 +11,7 @@ from geopy.geocoders import Nominatim
 from scipy.stats import zscore
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import multilabel_confusion_matrix
+import lightgbm as lgbm
 
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import *
@@ -56,10 +57,10 @@ def main():
     location_data, test_data_processed, train_data_processed = loadPreprocessedData()
     train_data, val_data = split_train_val(train_data_processed)
 
-    # ADA
-    # Run Ada 2.2 and 2.3
-    adaBoostModelSave(train_data, val_data)
-    runAdaBoostingClassifier(train_data, val_data)
+    # LIGHTGBM
+    # Run LightGBM 2.2 and 2.3
+    LGBMModelSave(train_data, val_data)
+    runLGBM(train_data, val_data)
     
     # Ada Overfitting Check 2.4
     overfitting_check(train_data, val_data)

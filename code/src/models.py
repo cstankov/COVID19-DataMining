@@ -1,7 +1,7 @@
 from main import *
 from dataHandler import *
 
-pkl_ada_filename = "ada_pickle_model.pkl"
+pkl_lgbm_filename = "lgbm_pickle_model.pkl"
 pkl_linearSVC_filename = "linearSVC_pickle_model.pkl"
 BASE_PATH = os.path.dirname(__file__)
 BASE_DATA = '../models/'   
@@ -94,8 +94,8 @@ def loadModel(ModelFileName):
     file_pth = os.path.relpath(BASE_DATA + ModelFileName, BASE_PATH)
     pickle_model = None
 
-    if ModelFileName == pkl_ada_filename:
-        print("Loading Ada Model...")
+    if ModelFileName == pkl_lgbm_filename:
+        print("Loading LGBM Model...")
     elif ModelFileName == pkl_linearSVC_filename:
         print("Loading SVC Model...")
 
@@ -103,25 +103,17 @@ def loadModel(ModelFileName):
         pickle_model = pickle.load(file)
     return pickle_model 
 
-################ ADA BOOST MODEL ################
+################ LGBM MODEL ################
 def overfitting_check(train_data, val_data):
     print("Checking for Overfitting...")
     #From https://machinelearningmastery.com/overfitting-machine-learning-models/
     x_train, y_train, x_val, y_val = splitForModel(train_data, val_data)
     train_scores, test_scores = list(), list()
 
-    depth = [None, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-
-    for d in depth:
-        DTC = DecisionTreeClassifier(random_state = 0, max_features = "auto", class_weight = "balanced",max_depth = d)
-        # param_grid = {"base_estimator__criterion" : ["entropy"],
-        #         "base_estimator__splitter" :   ["best"],
-        #         "n_estimators": [200],
-        #         "learning_rate": [1] 
-        #         } 
-        ada = AdaBoostClassifier(base_estimator = DTC)
-        # grid_search_ada = GridSearchCV(ada, param_grid=param_grid)
-        model = ada.fit(x_train, y_train)
+    n_est = [500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500]
+    for d in n_est:
+        lg = lgbm.LGBMClassifier(n_estimators= d)
+        model = lg.fit(x_train, y_train)        
         # evaluate on the train dataset
         train_y_pred = model.predict(x_train)
         train_acc = accuracy_score(y_train, train_y_pred)
@@ -132,27 +124,27 @@ def overfitting_check(train_data, val_data):
         test_scores.append(test_acc)
         # summarize progress
         if d == None:
-            print('>Max Depth: %s, train: %.3f, test: %.3f' % ('None', train_acc, test_acc))
+            print('>n_estimator: %s, train: %.3f, test: %.3f' % ('None', train_acc, test_acc))
         else:
-            print('>Max Depth: %d, train: %.3f, test: %.3f' % (d, train_acc, test_acc))
+            print('>n_estimator: %d, train: %.3f, test: %.3f' % (d, train_acc, test_acc))
     
-    plt.plot(depth, train_scores, '-o', label='Train')
-    plt.plot(depth, test_scores, '-o', label='Test')
-    plt.title("AdaBoost Overfitting")
-    plt.xlabel("Maximum Depth of Tree")
+    plt.plot(n_est, train_scores, '-o', label='Train')
+    plt.plot(n_est, test_scores, '-o', label='Test')
+    plt.title("LGBM Classifier Overfitting")
+    plt.xlabel("n_estimator value for LGBM Classifier")
     plt.ylabel("Accuracy")
     plt.legend()
     plt.show()
 
 
 
-def adaBoostModelSave(train_data, val_data):
+def LGBMModelSave(train_data, val_data):
     # from https://www.datacamp.com/community/tutorials/adaboost-classifier-python
  
     x_train, y_train, x_val, y_val = splitForModel(train_data, val_data)
-    print("Running Ada...")
+    print("Running LGBM...")
 
-    # Milestone3 
+    # Milestone3  #Do something like this for lgbm
     # Used GridSearchCV to get best parameters and then made the best_parameter_grid
     # uncomment to run the posible parameter 
     # idea from https://stackoverflow.com/questions/32210569/using-gridsearchcv-with-adaboost-and-decisiontreeclassifier
@@ -180,18 +172,17 @@ def adaBoostModelSave(train_data, val_data):
 
 
     # Milestone2:
-    DTC = DecisionTreeClassifier()
-    ada = AdaBoostClassifier(base_estimator = DTC)
-    model = ada.fit(x_train, y_train)
-    print("Saving AdaBoost Model...")
+    lg = lgbm.LGBMClassifier()
+    model = lg.fit(x_train, y_train)
+    print("Saving LGBM Model...")
     # From https://stackabuse.com/scikit-learn-save-and-restore-models/
-    file_pth = os.path.relpath(BASE_DATA + pkl_ada_filename, BASE_PATH)
+    file_pth = os.path.relpath(BASE_DATA + pkl_lgbm_filename, BASE_PATH)
     with open(file_pth, 'wb') as file:
         pickle.dump(model, file)          
 
-def runAdaBoostingClassifier(train_data, val_data):
+def runLGBM(train_data, val_data):
     x_train, y_train, x_val, y_val = splitForModel(train_data, val_data)
-    model = loadModel(pkl_ada_filename)
+    model = loadModel(pkl_lgbm_filename)
     
     y_pred = model.predict(x_val)
     print("y_pred unique:", np.unique(y_pred))
@@ -202,28 +193,136 @@ def runAdaBoostingClassifier(train_data, val_data):
     outputConfusionMatrixMetrics(cf, unique_labels)
 
 ################ LINEAR SVC MODEL ################
-
+ 
 def linearSVMModelSave(train_data, val_data):
     # from https://scikit-learn.org/stable/modules/generated/sklearn.svm.LinearSVC.html
     # from https://stackoverflow.com/questions/31617530/multiclass-linear-svm-in-python-that-return-probability
     x_train, y_train, x_val, y_val = splitForModel(train_data, val_data)
+    # param_grid = {"estimator__C" : [0.1, 1, 10, 100],
+    #             "estimator__tol" : [0.00001, 0.0001, 0.001, 0.01],
+    #             "estimator__max_iter" : [1000, 5000, 10000]}
     
     print("Running linear SVC...")
-    cl = CalibratedClassifierCV(LinearSVC(C=1, dual=False, max_iter=10000))
-    clf = OneVsRestClassifier(cl)
+    # cl = CalibratedClassifierCV(LinearSVC())
+    clf = OneVsRestClassifier(LinearSVC(dual=False))
     model = clf.fit(x_train, y_train)
-
+    
+    ## https://www.mygreatlearning.com/blog/gridsearchcv/ 
+    ## Best Params:  {'estimator__C': 0.1, 'estimator__max_iter': 1000, 'estimator__tol': 1e-05}
+    # grid = GridSearchCV(clf, param_grid, refit = True, verbose = 3)
+    # model = grid.fit(x_train, y_train)
+    # print("Best Params: ", grid.best_params_)
+    
     print("Saving linear SVC Model...")
     # From https://stackabuse.com/scikit-learn-save-and-restore-models/
     file_pth = os.path.relpath(BASE_DATA + pkl_linearSVC_filename, BASE_PATH)
     with open(file_pth, 'wb') as file:
         pickle.dump(model, file)  
-
+ 
 def runLinearSVCClassifier(train_data, val_data):
     x_train, y_train, x_val, y_val = splitForModel(train_data, val_data)
-    model = loadModel(pkl_ada_filename)
-
+    model = loadModel(pkl_linearSVC_filename)
+ 
     y_pred = model.predict(x_val)
+ 
+    unique_labels = np.unique(y_val)
+ 
+    cf = multilabel_confusion_matrix(y_val, y_pred, labels = unique_labels)
+    outputConfusionMatrixMetrics(cf, unique_labels)
+ 
+def overfittingLinearSVCcheck(train_data, val_data):
+    print("Checking for Linear SVC Overfitting...")
+    #From https://machinelearningmastery.com/overfitting-machine-learning-models/
+    x_train, y_train, x_val, y_val = splitForModel(train_data, val_data)
+    train_scores, test_scores = list(), list()
+    C_value = [0.1, 0.5, 1, 2, 5, 10, 20, 30, 50, 100]
+    tol_value = [0.0000001, 0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1, 1, 2, 5]
+    for c in tol_value:
+        clf = OneVsRestClassifier(LinearSVC(C=c, dual=False))
+        model = clf.fit(x_train, y_train)
+         # evaluate on the train dataset
+        train_y_pred = model.predict(x_train)
+        train_acc = accuracy_score(y_train, train_y_pred)
+        train_scores.append(train_acc)
+        # evaluate on the test dataset
+        test_y_pred = model.predict(x_val)
+        test_acc = accuracy_score(y_val, test_y_pred)
+        test_scores.append(test_acc)
+        # summarize progress
+        print('C value: %f, train: %.3f, test: %.3f' % (c, train_acc, test_acc))
+    
+    plt.plot(tol_value, train_scores, '-o', label='Train')
+    plt.plot(tol_value, test_scores, '-o', label='Test')
+    plt.title("Linear SVC Overfitting")
+    plt.xlabel("C value")
+    plt.ylabel("Accuracy")
+    plt.legend()
+    plt.show()
 
-    cf = confusion_matrix(y_val, y_pred)
-    outputConfusionMatrixMetrics(cf)
+#### RANDOM FOREST MODEL ###############
+def loadForest():
+    file_pth = os.path.relpath(BASE_DATA + pkl_ranforest_filename, BASE_PATH)
+    pickle_model = None
+    with open(file_pth, 'rb') as file:
+        pickle_model = pickle.load(file)
+        return pickle_model
+    return None
+ 
+def randomForestModel(train_data, val_data, test_data):
+    print("entering forest")
+    file_pth = os.path.relpath(BASE_DATA + pkl_ranforest_filename, BASE_PATH)
+    x_train, y_train, x_val, y_val = splitForModel(train_data, val_data)
+    model = RandomForestClassifier()
+    with open(file_pth, 'wb') as file:
+        pickle.dump(model, file)  
+ 
+ 
+    #GRIDSCORE FINDING THE OPTIMAL VALUES
+    # param_grid = { 'n_estimators': [200, 400, 500],
+    #               'max_features': ['auto', 'log2'],
+    #               'oob_score': [True]
+    # }
+    # grid = GridSearchCV(model, param_grid, refit = True, verbose = 3,n_jobs=-1)
+    # grid.fit(x_train, y_train) 
+    # # print best parameter after tuning 
+    # print("oob score= ", grid.oob_score)
+    # print("score = ", grid.score)
+    # print(grid.best_params_) 
+    # grid_pred = grid.predict(x_val) 
+ 
+ 
+ 
+def runRandomForestClassifier(train_data, val_data):
+    x_train, y_train, x_val, y_val = splitForModel(train_data, val_data)
+    model = loadForest()
+    if (model==None):
+        print("ERROR: model loaded Nothing")
+    else:
+        y_pred = model.predict(x_val)
+        cf = confusion_matrix(y_val, y_pred)
+        outputConfusionMatrixMetrics(cf)
+        # x_test, y_test, bleh, bleh2 = splitForModel(test_data, val_data)
+        # score = []
+        # test_score = []
+        # print("starting to train")
+        # for i in range(10,101,20):
+        #     clf = RandomForestClassifier(n_estimators = i)
+        #     print('running estimator = ', i)
+        #     model = clf.fit(x_train, y_train)
+        #     print("starting to score...")
+        #     score1= model.score(x_train, y_train)
+        #     score2=model.score(x_val, y_val)
+        #     print(f"score1 = {score1} score2 = {score2}")
+        #     score.append(score1)
+        #     test_score.append(score2)
+        #     #file_pth = os.path.relpath(BASE_DATA + pkl_ranforest_filename, BASE_PATH)
+        #     # y_pred = model.predict(x_val)
+        #     # cf = confusion_matrix(y_val, y_pred)
+        #     # outputConfusionMatrixMetrics(cf)
+ 
+        # num_trees = [_ for _ in range(10,101,20) ]
+        # plt.plot(num_trees, score, 'r', num_trees, test_score, 'b')
+        # plt.xlabel('number of trees')
+        # plt.ylabel('Accuracy')
+        # plt.show()
+ 
