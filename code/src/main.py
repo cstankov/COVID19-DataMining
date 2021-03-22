@@ -70,6 +70,8 @@ def main():
     # runLinearSVCClassifier(train_data, val_data)
 
     #randomForests
+    #The pkl model was too large for git buffers so I reduced the forest to only 1 tree
+    #To change this, please go to models.py, line 275 and change the parameter
     # randomForestModel(train_data, val_data)
     # runRandomForestClassifier(train_data, val_data)
 
