@@ -1,11 +1,33 @@
 from main import *
 
+def preprocessing_data(location_data, test_data, main_train_data):
+    BASE_PATH = os.path.dirname(__file__)
+    BASE_DATA = '../results/'
+    if os.path.exists(getRelPath(BASE_PATH, BASE_DATA,'location_transformed.csv')) and os.path.exists(getRelPath(BASE_PATH, BASE_DATA,'cases_test_processed.csv')) and os.path.exists(getRelPath(BASE_PATH, BASE_DATA,'cases_train_processed.csv')): 
+        print("Preprocessed data Found!!")
+        location_data, test_data_processed, train_data_processed = loadPreprocessedData()
+        return location_data, test_data_processed, train_data_processed
+    else:
+        print("Preprocessing data...")
+        #1.2
+        data_cleaning_and_missing_values(location_data, test_data, main_train_data)
+        print("Finished 1.2")
+        #1.3
+        find_outliers(main_train_data)
+        print("Finished 1.3")
+        #1.4
+        location_data = transform_location_data(location_data)
+        print("Finished 1.4")
+        #1.5
+        test_data_processed, train_data_processed = joining_datasets(location_data, test_data, main_train_data)
+        print("Finished 1.5")
+        saveData(location_data, test_data_processed, train_data_processed)
+        #1.6
+        print("Unique values in train data outcomes: ", np.unique(main_train_data['outcome']))
+        return location_data, test_data_processed, train_data_processed
+
 def split_train_val(train_data_processed):
     train_data, val_data = train_test_split(train_data_processed, test_size=0.2)
-    # print("len of train_data_processed: ", len(train_data_processed), " and shape: ", train_data_processed.shape) # 367636, shape: (367636, 10)
-    # print("80%: ", round(train_data_processed.shape[0] * 0.8), " 20%: ", round(train_data_processed.shape[0] * 0.2)) # 80%:  294109  20%:  73527
-    # print("len of train: ", len(train_data)) # ouputs 294108
-    # print("len of val: ", len(val_data)) # outputs 73528
     return train_data, val_data
 
 def loadPreprocessedData():

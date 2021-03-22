@@ -37,32 +37,17 @@ from models import *
 
 def main():
     
-    # location_data, test_data, main_train_data = loadAllData()
-    # #1.2
-    # data_cleaning_and_missing_values(location_data, test_data, main_train_data)
-    # print("Finished 1.2")
-    # #1.3
-    # find_outliers(main_train_data)
-    # print("Finished 1.3")
-    # #1.4
-    # location_data = transform_location_data(location_data)
-    # print("Finished 1.4")
-    # #1.5
-    # test_data_processed, train_data_processed = joining_datasets(location_data, test_data, main_train_data)
-    # print("Finished 1.5")
-    # saveData(location_data, test_data_processed, train_data_processed)
-    # #1.6
-    # print("Unique values in train data outcomes: ", np.unique(main_train_data['outcome']))
+    location_data, test_data, main_train_data = loadAllData()
 
-    location_data, test_data_processed, train_data_processed = loadPreprocessedData()
+    location_data, test_data_processed, train_data_processed  = preprocessing_data(location_data, test_data, main_train_data)
     train_data, val_data = split_train_val(train_data_processed)
 
     # LIGHTGBM
     # Run LightGBM 2.2 and 2.3
-    # LGBMModelSave(train_data, val_data)
-    # runLGBM(train_data, val_data)
+    LGBMModelSave(train_data, val_data)
+    runLGBM(train_data, val_data)
     
-    # # Ada Overfitting Check 2.4
+    # # LGBM Overfitting Check 2.4
     # overfitting_check(train_data, val_data)
 
     # Linear SVC
