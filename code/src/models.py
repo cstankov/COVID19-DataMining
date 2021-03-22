@@ -141,38 +141,8 @@ def overfitting_check(train_data, val_data):
 
 def LGBMModelSave(train_data, val_data):
     # from https://www.datacamp.com/community/tutorials/adaboost-classifier-python
- 
     x_train, y_train, x_val, y_val = splitForModel(train_data, val_data)
     print("Running LGBM...")
-
-    # Milestone3  #Do something like this for lgbm
-    # Used GridSearchCV to get best parameters and then made the best_parameter_grid
-    # uncomment to run the posible parameter 
-    # idea from https://stackoverflow.com/questions/32210569/using-gridsearchcv-with-adaboost-and-decisiontreeclassifier
-    # DTC = DecisionTreeClassifier(random_state = 0, max_features = "auto", class_weight = "balanced",max_depth = None)
-    # param_grid = {"base_estimator__criterion" : ["gini", "entropy"],
-    #           "base_estimator__splitter" :   ["best", "random"],
-    #           "n_estimators": [50, 100, 150, 200],
-    #           "learning_rate": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1] #best --> not this
-    #          } 
-    # ada = AdaBoostClassifier(base_estimator = DTC)
-    # grid_search_ada = GridSearchCV(ada, param_grid=param_grid)
-    # model = grid_search_ada.fit(x_train, y_train)
-    # print("Best Parameters: ", grid_search_ada.best_params_)
- 
-    # using best parameters
-    # DTC = DecisionTreeClassifier(random_state = 0, max_features = "auto", class_weight = "balanced",max_depth = 5)
-    # param_grid = {"base_estimator__criterion" : ["entropy"],
-    #           "base_estimator__splitter" :   ["best"],
-    #           "n_estimators": [200],
-    #           "learning_rate": [1] 
-    #          } 
-    # ada = AdaBoostClassifier(base_estimator = DTC)
-    # grid_search_ada = GridSearchCV(ada, param_grid=param_grid)
-    # model = grid_search_ada.fit(x_train, y_train)
-
-
-    # Milestone2:
     lg = lgbm.LGBMClassifier()
     model = lg.fit(x_train, y_train)
     print("Saving LGBM Model...")
@@ -184,7 +154,7 @@ def LGBMModelSave(train_data, val_data):
 def runLGBM(train_data, val_data):
     x_train, y_train, x_val, y_val = splitForModel(train_data, val_data)
     model = loadModel(pkl_lgbm_filename)
-    
+
     y_pred = model.predict(x_val)
     print("y_pred unique:", np.unique(y_pred))
 
@@ -204,7 +174,6 @@ def linearSVMModelSave(train_data, val_data):
     #             "estimator__max_iter" : [1000, 5000, 10000]}
     
     print("Running linear SVC...")
-    # cl = CalibratedClassifierCV(LinearSVC())
     clf = OneVsRestClassifier(LinearSVC(dual=False))
     model = clf.fit(x_train, y_train)
     
@@ -237,8 +206,7 @@ def overfittingLinearSVCcheck(train_data, val_data):
     x_train, y_train, x_val, y_val = splitForModel(train_data, val_data)
     train_scores, test_scores = list(), list()
     C_value = [0.1, 0.5, 1, 2, 5, 10, 20, 30, 50, 100]
-    tol_value = [0.0000001, 0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1, 1, 2, 5]
-    for c in tol_value:
+    for c in C_value:
         clf = OneVsRestClassifier(LinearSVC(C=c, dual=False))
         model = clf.fit(x_train, y_train)
          # evaluate on the train dataset
@@ -252,13 +220,15 @@ def overfittingLinearSVCcheck(train_data, val_data):
         # summarize progress
         print('C value: %f, train: %.3f, test: %.3f' % (c, train_acc, test_acc))
     
-    plt.plot(tol_value, train_scores, '-o', label='Train')
-    plt.plot(tol_value, test_scores, '-o', label='Test')
+    plt.plot(C_value, train_scores, '-o', label='Train')
+    plt.plot(C_value, test_scores, '-o', label='Test')
     plt.title("Linear SVC Overfitting")
     plt.xlabel("C value")
     plt.ylabel("Accuracy")
     plt.legend()
     plt.show()
+
+################ RANDOM FOREST MODEL ################
 
 def loadForest():
     file_pth = os.path.relpath(BASE_DATA + pkl_ranforest_filename, BASE_PATH)
@@ -275,23 +245,7 @@ def randomForestModel(train_data, val_data):
     model = RandomForestClassifier(n_estimators = 1)        #Please remove this parameter here to get default model of 100 trees
     model = model.fit(x_train, y_train)
     with open(file_pth, 'wb') as file:
-        pickle.dump(model, file)  
- 
- 
-    #GRIDSCORE FINDING THE OPTIMAL VALUES
-    # param_grid = { 'n_estimators': [200, 400, 500],
-    #               'max_features': ['auto', 'log2'],
-    #               'oob_score': [True]
-    # }
-    # grid = GridSearchCV(model, param_grid, refit = True, verbose = 3,n_jobs=-1)
-    # grid.fit(x_train, y_train) 
-    # # print best parameter after tuning 
-    # print("oob score= ", grid.oob_score)
-    # print("score = ", grid.score)
-    # print(grid.best_params_) 
-    # grid_pred = grid.predict(x_val) 
- 
- 
+        pickle.dump(model, file)   
  
 def runRandomForestClassifier(train_data, val_data):
     x_train, y_train, x_val, y_val = splitForModel(train_data, val_data)
@@ -303,27 +257,21 @@ def runRandomForestClassifier(train_data, val_data):
         cf = confusion_matrix(y_val, y_pred)
         unique_labels = np.unique(y_val)
         outputConfusionMatrixMetrics(cf, unique_labels)
-        # x_test, y_test, bleh, bleh2 = splitForModel(train_data, val_data)
-        # score = []
-        # test_score = []
-        # print("starting to train")
-        # for i in range(1,11,1):
-        #     clf = RandomForestClassifier(n_estimators = i)
-        #     print('running estimator = ', i)
-        #     model = clf.fit(x_train, y_train)
-        #     print("starting to score...")
-        #     score1= model.score(x_train, y_train)
-        #     score2=model.score(x_val, y_val)
-        #     print(f"score1 = {score1} score2 = {score2}")
-        #     score.append(score1)
-        #     test_score.append(score2)
-        #     #file_pth = os.path.relpath(BASE_DATA + pkl_ranforest_filename, BASE_PATH)
-        #     # y_pred = model.predict(x_val)
-        #     # cf = confusion_matrix(y_val, y_pred)
-        #     # outputConfusionMatrixMetrics(cf)
+        # This is what produces the overfitting plot 
+        x_test, y_test, bleh, bleh2 = splitForModel(train_data, val_data)
+        score = []
+        test_score = []
+        print("starting to train")
+        for i in range(1,11,1):
+            clf = RandomForestClassifier(n_estimators = i)
+            model = clf.fit(x_train, y_train)
+            score1= model.score(x_train, y_train)
+            score2=model.score(x_val, y_val)
+            score.append(score1)
+            test_score.append(score2)
  
-        # num_trees = [_ for _ in range(1,11,1) ]
-        # plt.plot(num_trees, score, 'r', num_trees, test_score, 'b')
-        # plt.xlabel('number of trees')
-        # plt.ylabel('Accuracy')
-        # plt.show()
+        num_trees = [_ for _ in range(1, 11,1) ]
+        plt.plot(num_trees, score, 'r', num_trees, test_score, 'b')
+        plt.xlabel('number of trees')
+        plt.ylabel('Accuracy')
+        plt.show()

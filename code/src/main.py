@@ -46,19 +46,21 @@ def main():
     # Run LightGBM 2.2 and 2.3
     LGBMModelSave(train_data, val_data)
     runLGBM(train_data, val_data)
-    
-    # # LGBM Overfitting Check 2.4
-    # overfitting_check(train_data, val_data)
+    # LGBM Overfitting Check 2.4
+    overfitting_check(train_data, val_data)
 
     # Linear SVC
-    # linearSVMModelSave(train_data, val_data)
-    # runLinearSVCClassifier(train_data, val_data)
+    # Run Linear SVC 2.2 and 2.3
+    linearSVMModelSave(train_data, val_data)
+    runLinearSVCClassifier(train_data, val_data)
+    # LGBM Overfitting Check 2.4
+    overfittingLinearSVCcheck(train_data, val_data)
 
     #randomForests
     #The pkl model was too large for git buffers so I reduced the forest to only 1 tree
     #To change this, please go to models.py, line 275 and change the parameter
-    # randomForestModel(train_data, val_data)
-    # runRandomForestClassifier(train_data, val_data)
+    randomForestModel(train_data, val_data)
+    runRandomForestClassifier(train_data, val_data)
 
 
 if __name__ == "__main__":
