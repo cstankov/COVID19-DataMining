@@ -3,6 +3,7 @@ from dataHandler import *
 
 pkl_lgbm_filename = "lgbm_pickle_model.pkl"
 pkl_linearSVC_filename = "linearSVC_pickle_model.pkl"
+pkl_ranforest_filename = "ranforest_pickle_model.pkl"
 BASE_PATH = os.path.dirname(__file__)
 BASE_DATA = '../models/'   
 
@@ -259,7 +260,6 @@ def overfittingLinearSVCcheck(train_data, val_data):
     plt.legend()
     plt.show()
 
-#### RANDOM FOREST MODEL ###############
 def loadForest():
     file_pth = os.path.relpath(BASE_DATA + pkl_ranforest_filename, BASE_PATH)
     pickle_model = None
@@ -268,11 +268,12 @@ def loadForest():
         return pickle_model
     return None
  
-def randomForestModel(train_data, val_data, test_data):
+def randomForestModel(train_data, val_data):
     print("entering forest")
     file_pth = os.path.relpath(BASE_DATA + pkl_ranforest_filename, BASE_PATH)
     x_train, y_train, x_val, y_val = splitForModel(train_data, val_data)
-    model = RandomForestClassifier()
+    model = RandomForestClassifier(n_estimators = 1)        #Please remove this parameter here to get default model of 100 trees
+    model = model.fit(x_train, y_train)
     with open(file_pth, 'wb') as file:
         pickle.dump(model, file)  
  
@@ -300,12 +301,13 @@ def runRandomForestClassifier(train_data, val_data):
     else:
         y_pred = model.predict(x_val)
         cf = confusion_matrix(y_val, y_pred)
-        outputConfusionMatrixMetrics(cf)
-        # x_test, y_test, bleh, bleh2 = splitForModel(test_data, val_data)
+        unique_labels = np.unique(y_val)
+        outputConfusionMatrixMetrics(cf, unique_labels)
+        # x_test, y_test, bleh, bleh2 = splitForModel(train_data, val_data)
         # score = []
         # test_score = []
         # print("starting to train")
-        # for i in range(10,101,20):
+        # for i in range(1,11,1):
         #     clf = RandomForestClassifier(n_estimators = i)
         #     print('running estimator = ', i)
         #     model = clf.fit(x_train, y_train)
@@ -320,9 +322,8 @@ def runRandomForestClassifier(train_data, val_data):
         #     # cf = confusion_matrix(y_val, y_pred)
         #     # outputConfusionMatrixMetrics(cf)
  
-        # num_trees = [_ for _ in range(10,101,20) ]
+        # num_trees = [_ for _ in range(1,11,1) ]
         # plt.plot(num_trees, score, 'r', num_trees, test_score, 'b')
         # plt.xlabel('number of trees')
         # plt.ylabel('Accuracy')
         # plt.show()
- 
