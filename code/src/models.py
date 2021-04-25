@@ -14,6 +14,7 @@ def splitForModel(test_data, train_data, val_data, return_numpy = True, convert_
     val_cpy = val_data.copy()
     test_cpy = test_data.copy()
 
+    #print(np.unique(train_cpy['Case-Fatality_Ratio']))
     train_cpy.drop(['Source'], axis = 1, inplace = True)
     val_cpy.drop(['Source'], axis = 1, inplace = True)
     test_cpy.drop(['Source'], axis = 1, inplace = True)
@@ -23,79 +24,19 @@ def splitForModel(test_data, train_data, val_data, return_numpy = True, convert_
     val_cpy['Outcome'].replace({'deceased':0, 'hospitalized':1, 'nonhospitalized':2, 'recovered':3},inplace=True)
 
     categorical_cols = ["Sex",  "Province_State", "Country", "Combined_Key", "Date_Confirmation"]
+
+
+    enc_dict = {}
+    count = 0
+    #print(np.unique(train_cpy['Case-Fatality_Ratio']))
     if convert_categorical == True:
-
         for col in categorical_cols:
-            # train_cpy[col] = train_cpy[col].apply(lambda x: int.from_bytes(str.encode(x), 'little'))
-            # val_cpy[col] = val_cpy[col].apply(lambda x: int.from_bytes(str.encode(x), 'little'))
-            # test_cpy[col] = test_cpy[col].apply(lambda x: int.from_bytes(str.encode(x), 'little'))
-            train_cpy[col] = train_cpy[col].apply(lambda x: int(hashlib.sha256(x.encode()).hexdigest(), 16))
-            val_cpy[col] = val_cpy[col].apply(lambda x: int(hashlib.sha256(x.encode()).hexdigest(), 16))
-            test_cpy[col] = test_cpy[col].apply(lambda x: int(hashlib.sha256(x.encode()).hexdigest(), 16))
 
-         #To convert back use:
-            # in_cpy[col] = train_cpy[col].apply(lambda x: x.to_bytes(math.ceil(x.bit_length() / 8), 'little').decode())
-            # val_cpy[col] = val_cpy[col].apply(lambda x.to_bytes(math.ceil(x.bit_length() / 8), 'little').decode())
-            # test_cpy[col] = test_cpy[col].apply(lambda x.to_bytes(math.ceil(x.bit_length() / 8), 'little').decode())
+            train_cpy[col] = train_cpy[col].apply(lambda x: int(hashlib.sha1(x.encode("utf-8")).hexdigest(), 16)) % (10 ** 8)
+            val_cpy[col] = val_cpy[col].apply(lambda x: int(hashlib.sha1(x.encode("utf-8")).hexdigest(), 16)) % (10 ** 8)
+            test_cpy[col] = test_cpy[col].apply(lambda x: int(hashlib.sha1(x.encode("utf-8")).hexdigest(), 16)) % (10 ** 8)
 
-    #     train_cpy["train"] = 1
-    #     val_cpy["train"] = -1
-    #     test_cpy["train"] = 0
-    #     combined = pd.concat([train_cpy, val_cpy, test_cpy])
-
-    #     for col in categorical_cols:
-    #         print(col)
-    #         df = pd.get_dummies(combined[col])
-    #         combined = pd.concat([combined, df], axis = 1)
-
-    #     print("Extracting")
-    #     train_cpy = combined[combined["train"]==1]    
-    #     val_cpy = combined[combined["train"]==-1]    
-    #     test_cpy = combined[combined["train"]==0]
-
-    #     print("cleaning up")
-    #     train_cpy.drop(categorical_cols, axis = 1, inplace = True)
-    #     val_cpy.drop(categorical_cols, axis = 1, inplace = True)
-    #     test_cpy.drop(categorical_cols, axis = 1, inplace = True)
-
-    #     print("cleaning up train cloumn")
-    #     train_cpy.drop(['train'], axis = 1, inplace = True)
-    #     val_cpy.drop(['train'], axis = 1, inplace = True)
-    #     test_cpy.drop(['train'], axis = 1, inplace = True)
-        
-
-        # le = OneHotEncoder(sparse = False)
-
-        # # le.fit(main_train_data)
-        # for col in categorical_cols:
-        #     print(col)
-            # curr_col = np.asarray(main_train_data[col]) #current col
-            # print(curr_col.reshape(1,-1))
-            # curr_enc = le.fit(curr_col.reshape(1, -1))
-            # le = preprocessing.LabelEncoder()
-            # le.fit(main_train_data[col])
-            # train_cpy[col] = train_cpy[col].apply(le.fit_transform)
-            # val_data[col] = val_data[col].apply(le.fit_transform)
-            # test_data[col] = test_data[col].apply(le.fit_transform)
-            # print(curr_enc)
-            # train_cpy[col] = curr_enc.transform([train_cpy[col], [col]])
-            # val_data[col] = curr_enc.transform(val_data[col])
-            # test_data[col] = curr_enc.transform(test_data[col])
-
-        # one_hot = pd.get_dumm
-        # print("Doing for OUTCOME")
-        # # le = preprocessing.LabelEncoder()
-        # # le.fit(main_train_data['Outcome'])    
-        # # print("train")
-        # # print(train_cpy.head(10))
-        # # print(train_cpy['Outcome'])
-        # train_cpy['Outcome'].replace({'deceased':0, 'hospitalized':1, 'nonhospitalized':2, 'recovered':3},inplace=True)
-        # val_cpy['Outcome'].replace({'deceased':0, 'hospitalized':1, 'nonhospitalized':2, 'recovered':3},inplace=True)
-        # le_name_mapping = dict(zip(le.classes_, le.transform(le.classes_)))
-        # print("Mapping:")
-        # print(le_name_mapping)
-        # print("\n\n")
-        
+    
     print("Done categorical encoding...")  
     # print(train_cpy.head(30))  
     x_train = train_cpy.loc[:, train_cpy.columns != 'Outcome']
@@ -107,6 +48,12 @@ def splitForModel(test_data, train_data, val_data, return_numpy = True, convert_
     y_train = train_cpy['Outcome']
     x_val = val_cpy.loc[:, val_cpy.columns != 'Outcome']
     y_val = val_cpy['Outcome']
+
+
+    #     for col in df_num:
+    #     print(df_num.groupby(np.isinf(df_num[col])).count())
+    # train_data, val_data = split_train_val(train_data_processed)
+
 
     if return_numpy == True:
         x_train = x_train.to_numpy()
@@ -639,20 +586,17 @@ def runRandomForestClassifier(x_train, y_train, x_val, y_val, test_data):
         # plt.show()
 
 def random_forest_test_hparam(x_train, y_train, x_val, y_val, test_data):
-    # x_train, y_train, x_val, y_val ,le = splitForModel(train_data, val_data)
-    #model = model.fit(x_train, y_train)
 
-
+    ####Parameters
     max_depth = [x for x in range(10, 30, 5) ]
     n_estimators = [x for x in range(50, 175, 50) ]
     min_samples_split = [2, 4]
 
-    # max_depth = [10, 20]
-    
-    # n_estimators = [50]
-    # min_samples_split = [2]
 
-    rf = RandomForestClassifier()
+    rf = RandomForestClassifier(max_depth=15, n_estimators=50, min_samples_split=2)
+    rf.fit(x_train, y_train)
+    print("FIT DONE")
+    return
 
     ###################################### now finding the best value ############################
     #GRIDSCORE FINDING THE OPTIMAL VALUES

@@ -58,6 +58,7 @@ def transform_location_data(location_data):
 
     # calculate fat ratio = deaths/confirmed * 100
     temp2['Case-Fatality_Ratio'] = (temp2['Deaths'] / temp2['Confirmed']) * 100
+    temp2.replace([np.inf, -np.inf], 0, inplace=True)
     location_data = temp2.copy()
 
     return location_data
