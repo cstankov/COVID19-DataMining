@@ -5,12 +5,16 @@ import pickle
 
 import matplotlib.pyplot as plt
 import statistics
+import hashlib
 
+from IPython.display import display
 from datetime import datetime
 from geopy.geocoders import Nominatim
 from scipy.stats import zscore
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import multilabel_confusion_matrix
+from sklearn.metrics import make_scorer, f1_score, recall_score, precision_recall_fscore_support, precision_score
+from sklearn.preprocessing import OneHotEncoder
 import lightgbm as lgbm
 
 from sklearn.model_selection import train_test_split
@@ -40,27 +44,32 @@ def main():
     location_data, test_data, main_train_data = loadAllData()
 
     location_data, test_data_processed, train_data_processed  = preprocessing_data(location_data, test_data, main_train_data)
+    
     train_data, val_data = split_train_val(train_data_processed)
+    print("Len: ", len(test_data_processed))
 
     # LIGHTGBM
     # Run LightGBM 2.2 and 2.3
-    LGBMModelSave(train_data, val_data)
-    runLGBM(train_data, val_data)
-    # LGBM Overfitting Check 2.4
-    overfitting_check(train_data, val_data)
+    x_train, y_train, x_val, y_val, test_data = splitForModel(test_data=test_data_processed, train_data = train_data, val_data = val_data)
+    LGBMModelSave(x_train, y_train, x_val, y_val, test_data)
+    runLGBM(x_train, y_train, x_val, y_val, test_data)
+    runLGBM_hypertuned(x_train, y_train, x_val, y_val, test_data);
+    
+    # # # LGBM Overfitting Check 2.4
+    # overfitting_check(x_train, y_train, x_val, y_val, test_data)
 
     # Linear SVC
-    # Run Linear SVC 2.2 and 2.3
-    linearSVMModelSave(train_data, val_data)
-    runLinearSVCClassifier(train_data, val_data)
-    # LGBM Overfitting Check 2.4
-    overfittingLinearSVCcheck(train_data, val_data)
-
+    # linearSVMModelSave(x_train, y_train, x_val, y_val, test_data)
+    # runLinearSVCClassifier(x_train, y_train, x_val, y_val, test_data)
+    
+    # plot_result(model_name = "LGBM", model_result_path= "../results/LGBM_tuning.csv", x_train, y_train, x_val, y_val, test_data)
+    # runDecisionTreeModel(x_train, y_train, x_val, y_val, test_data);
+    # runLinearSVC_hypertuned(x_train, y_train, x_val, y_val, test_data);
     #randomForests
     #The pkl model was too large for git buffers so I reduced the forest to only 1 tree
     #To change this, please go to models.py, line 275 and change the parameter
-    randomForestModel(train_data, val_data)
-    runRandomForestClassifier(train_data, val_data)
+    # randomForestModelx_train, y_train, x_val, y_val, test_data)
+    # runRandomForestClassifier(x_train, y_train, x_val, y_val, test_data)
 
 
 if __name__ == "__main__":
