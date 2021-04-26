@@ -520,7 +520,7 @@ def plot_ranforest_data():
     
     param_label = '(Max_Depth, Min_Samples_Split, N_Estimators)'
     print("plotting...")
-    plt.figure(1)
+    plt.figure()
     plt.title("Random Forest: F1_Score on Deceased ")
     plt.xlabel(param_label)
     plt.ylabel("F1_Score")
@@ -533,7 +533,7 @@ def plot_ranforest_data():
     plt.savefig(f1score_save)
 
     
-    plt.figure(1)
+    plt.figure()
     plt.title("Random Forest: Recall deceased")
     plt.xlabel(param_label)
     plt.ylabel("Recall")
@@ -545,7 +545,7 @@ def plot_ranforest_data():
     recall_save = '../plots/' + 'RandomForest' + '_Recall_plot.png'
     plt.savefig(recall_save)
 
-    plt.figure(1)
+    plt.figure()
     plt.title("Random Forest: Accuracy ")
     plt.xlabel(param_label)
     plt.ylabel("Accuracy")

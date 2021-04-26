@@ -66,13 +66,13 @@ def main():
     # runRandomForestClassifier(x_train, y_train, x_val, y_val, test_data)
     #random_forest_test_hparam(x_train, y_train, x_val, y_val, test_data)               #Hyperparameter tuing
     #random_forest_predict(x_train=x_train, y_train=y_train, test_data=test_data)       #prediction of onto testing data
-    #plot_ranforest_data()                                                              # plot the data
+    plot_ranforest_data()                                                              # plot the data
 
     #For the best model
     # lgbm_predict(x_train, y_train, x_val, y_val, test_data)
     # print("checking...")
     
-    check_if_file_valid('../results/predictions.txt')   
+    #check_if_file_valid('../results/predictions.txt')   
 
 if __name__ == "__main__":
     main()
