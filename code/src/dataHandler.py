@@ -65,8 +65,8 @@ def saveData(location_data, test_data, train_data):
         os.remove(test_path)
 
     location_data.to_csv(loc_path)
-    test_data.to_csv(getRelPath(BASE_PATH, BASE_DATA, 'cases_test_processed.csv'))
-    train_data.to_csv(getRelPath(BASE_PATH, BASE_DATA, 'cases_train_processed.csv'))
+    test_data.to_csv(getRelPath(BASE_PATH, BASE_DATA, 'cases_test_processed.csv'), index=False)
+    train_data.to_csv(getRelPath(BASE_PATH, BASE_DATA, 'cases_train_processed.csv'), index=False)
 
 def getRelPath(BASE_PATH, BASE_DATA, SUB_PATH):
     COMBINED_PATH = BASE_DATA + SUB_PATH

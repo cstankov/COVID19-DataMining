@@ -40,6 +40,10 @@ def splitForModel(test_data, train_data, val_data, return_numpy = True, convert_
     print("Done categorical encoding...")  
     # print(train_cpy.head(30))  
     x_train = train_cpy.loc[:, train_cpy.columns != 'Outcome']
+    # test_cpy = test_cpy.loc[:, test_data.columns != 'Outcome']
+    test_cpy.drop(['Outcome'], axis='columns', inplace=True)
+
+    # print(test_cpy.head(10))
     # print("unique sex values")
     # print(np.unique(train_cpy['Sex']))
 
@@ -60,8 +64,9 @@ def splitForModel(test_data, train_data, val_data, return_numpy = True, convert_
         y_train = y_train.to_numpy()
         x_val = x_val.to_numpy()
         y_val = y_val.to_numpy()
+        test_cpy = test_cpy.to_numpy()
 
-    return x_train, y_train, x_val, y_val, test_data
+    return x_train, y_train, x_val, y_val, test_cpy
 
 
 def printMetrics(confusion_mat, label_number):
@@ -206,24 +211,26 @@ def runLGBM_hypertuned(x_train, y_train, x_val, y_val, test_data):
            "f1_score_decease": make_scorer(f1_score, labels = [0], average = None)}
 
     gridParams_best = {
-    'learning_rate': [0.1],
-    'num_leaves': [81, 91],
-    'max_bin': [100, 120],
-    'boosting_type': ['gbdt'],
-    'n_estimators': [100, 200, 300],
+        'learning_rate': [0.1],
+        'num_leaves': [81, 91],
+        'max_bin': [100, 120],
+        'boosting_type': ['gbdt'],
+        'n_estimators': [100, 200, 300],
     }
 
     gridParams2 = {
-    'learning_rate': [0.1],
-    'num_leaves': [71, 81],
-    'max_bin': [91, 101],
-    'boosting_type': ['gbdt'],
-    'n_estimators': [300, 450],
+        'objective': ['multiclass'],
+        'num_class' : [4],
+        'learning_rate': [0.1, 0.025],
+        'num_leaves': [81, 91],
+        'max_bin': [100, 120],
+        'boosting_type': ['gbdt'],
+        'n_estimators': [100, 200, 300],
     }
 
-    lgbm_grid = GridSearchCV(clf, gridParams, verbose = 3, cv = 5, refit = False, scoring = custom_scoring, return_train_score= True)
+    lgbm_grid = GridSearchCV(clf, gridParams2, verbose = 3, cv = 5, refit = False, scoring = custom_scoring, return_train_score= True) #changed to 3 fold to make it faster
     model = lgbm_grid.fit(x_train, y_train)
-    pd.DataFrame(lgbm_grid.cv_results_).to_csv("../results/LGBM_tuning.csv")
+    pd.DataFrame(lgbm_grid.cv_results_).to_csv("../results/LGBM_tuning2.csv")
     display(pd.DataFrame(lgbm_grid.cv_results_))
     
     # grid_search_best_params = {'boosting_type': 'gbdt', 'learning_rate': 0.1, 'max_bin': 100, 'n_estimators': 300, 'num_leaves': 81}
@@ -240,99 +247,93 @@ def plot_result(model_name, model_result_path, x_train, y_train, x_val, y_val, t
     if (model_name == 'LGBM'):
         if not (os.path.exists(model_result_path)):
             runLGBM_hypertuned(x_train, y_train, x_val, y_val, test_data)
-
-
         lgbm_result = pd.read_csv(model_result_path)
-
         tuned = list(zip(lgbm_result.param_num_leaves, lgbm_result.param_n_estimators, lgbm_result.param_max_bin))
         tuned_params = ['{}, {}, {}'.format(x,y,z) for x,y,z in tuned]
-        print("tuned_params: ")
-        print(tuned_params)
-        # lgbm_num_leaves = lgbm_result['param_num_leaves']
-        # lgbm_n_estimators = lgbm_result['param_n_estimators']
-        # lgbm_max_bin = lgbm_result['param_max_bin']
-
-        lgbm_mean_test_accuracy = list(lgbm_result['mean_test_Accuracy'])
-        lgbm_mean_train_accuracy = list(lgbm_result['mean_train_Accuracy'])
-
-        lgbm_mean_test_f1_deceased = list(lgbm_result['mean_test_f1_score_decease'])
-        lgbm_mean_train_f1_deceased = list(lgbm_result['mean_train_f1_score_decease'])
-
-        lgbm_mean_test_recal = list(lgbm_result['mean_test_recall'])
-        lgbm_mean_train_recal = list(lgbm_result['mean_train_recall'])
-
-        lgbm_mean_test_recall_deceased = list(lgbm_result['mean_test_recall_Deceased'])
-        lgbm_mean_train_recall_deceased = list(lgbm_result['mean_train_recall_Deceased'])
-        # print(lgbm_mean_test_accuracy)
-
-        plt.figure() #accuracy
-        plt.plot(tuned_params, lgbm_mean_test_accuracy, label = "Test Accuracy", marker = 'o')
-        plt.plot(tuned_params, lgbm_mean_train_accuracy, label = "Train Accuracy", marker = 'o')
-
-        plt.xlabel("(num_leaves, n_etimators, max_bin)")
-        plt.ylabel("Accuracy")
-        plt.title("LGBM Model Accuracy vs tuned paramters")
-
-        plt.xticks(rotation=90)   
-        plt.tight_layout()     
-        plt.legend()
-
-        plt.savefig('../plots/LGBM_accuracy_plot.png')
-
-        plt.figure() #f1-score-deceased
-        plt.plot(tuned_params, lgbm_mean_test_f1_deceased, label = "Test F1 Score for Deceased", marker = 'o')
-        plt.plot(tuned_params, lgbm_mean_train_f1_deceased, label = "Train F1 Score for Deceased", marker = 'o')
-
-        plt.xlabel("(num_leaves, n_etimators, max_bin)")
-        plt.ylabel("F1 SCore for 'Deceased'")
-        plt.title("LGBM Model F1 Score for 'Deaceased' Outcome vs tuned paramters")
-
-        plt.xticks(rotation=90)        
-        plt.tight_layout()     
-        plt.legend()
-
-        plt.savefig('../plots/LGBM_F1_score_deceased_plot.png')
-
-        plt.figure() #recall-deceased
-        plt.plot(tuned_params, lgbm_mean_test_recall_deceased, label = "Test Recall for Deceased", marker = 'o')
-        plt.plot(tuned_params, lgbm_mean_train_recall_deceased, label = "Train Recall for Deceased", marker = 'o')
-
-        plt.xlabel("(num_leaves, n_etimators, max_bin)")
-        plt.ylabel("Recall for 'Deceased'")
-        plt.title("LGBM Model Recall for 'Deaceased' Outcome vs tuned paramters")
-
-        plt.xticks(rotation=90)        
-        plt.tight_layout()     
-        plt.legend()
-
-        plt.savefig('../plots/LGBM_Recall_deceased_plot.png')
-
-        plt.figure() #recall
-        plt.plot(tuned_params, lgbm_mean_test_recal, label = "Test Recall", marker = 'o')
-        plt.plot(tuned_params, lgbm_mean_train_recal, label = "Train Recall", marker = 'o')
-
-        plt.xlabel("(num_leaves, n_etimators, max_bin)")
-        plt.ylabel("Overall Recall")
-        plt.title("LGBM Model Overall Recall vs tuned paramters")
-
-        plt.xticks(rotation=90)        
-        plt.tight_layout()     
-        plt.legend()
-
-        plt.savefig('../plots/LGBM_Recall_plot.png')
-
-        
-
-        plt.show()
-
-        # plt.savefig()
-
+        params = "(num_leaves, n_etimators, max_bin)"
+        model = "LGBM"
+        plotFigures(lgbm_result, tuned_params, params, model)
     elif model_name == 'LinearSVC':
          if not (os.path.exists(model_result_path)):
              runLinearSVC_hypertuned(test_data, train_data = train_data, val_data = val_data)
     else: 
         print("Invalid Model name given. Expected 'LGBM', 'LinearSVC' or 'RandomForest', got: ", model_name)
-
+ 
+def plotFigures(results, tuned_params, params, model):
+    mean_test_accuracy = list(results['mean_test_Accuracy'])
+    mean_train_accuracy = list(results['mean_train_Accuracy'])
+ 
+    mean_test_f1_deceased = list(results['mean_test_f1_score_decease'])
+    mean_train_f1_deceased = list(results['mean_train_f1_score_decease'])
+ 
+    mean_test_recall = list(results['mean_test_recall'])
+    mean_train_recall = list(results['mean_train_recall'])
+ 
+    mean_test_recall_deceased = list(results['mean_test_recall_Deceased'])
+    mean_train_recall_deceased = list(results['mean_train_recall_Deceased'])
+ 
+    plt.figure() #accuracy
+    plt.plot(tuned_params, mean_test_accuracy, label = "Test Accuracy", marker = 'o')
+    plt.plot(tuned_params, mean_train_accuracy, label = "Train Accuracy", marker = 'o')
+ 
+    plt.xlabel(params) #params "(num_leaves, n_etimators, max_bin)"
+    plt.ylabel("Accuracy")
+    model_title = model + " Model Accuracy vs tuned paramters"
+    plt.title(model_title)
+ 
+    plt.xticks(rotation=90)   
+    plt.tight_layout()     
+    plt.legend()
+    accuracy_save = '../plots/' + model + '_accuracy_plot.png'
+    plt.savefig(accuracy_save)
+ 
+    plt.figure() #f1-score-deceased
+    plt.plot(tuned_params, mean_test_f1_deceased, label = "Test F1 Score for Deceased", marker = 'o')
+    plt.plot(tuned_params, mean_train_f1_deceased, label = "Train F1 Score for Deceased", marker = 'o')
+ 
+    plt.xlabel(params)
+    plt.ylabel("F1 SCore for 'Deceased'")
+    model_title = model + "  Model F1 Score for 'Deaceased' Outcome vs tuned paramters"
+    plt.title(model_title)
+ 
+    plt.xticks(rotation=90)        
+    plt.tight_layout()     
+    plt.legend()
+    f1_score_deceased_save = '../plots/' + model + '_F1_score_deceased_plot.png'
+    plt.savefig(f1_score_deceased_save)
+ 
+    plt.figure() #recall-deceased
+    plt.plot(tuned_params, mean_test_recall_deceased, label = "Test Recall for Deceased", marker = 'o')
+    plt.plot(tuned_params, mean_train_recall_deceased, label = "Train Recall for Deceased", marker = 'o')
+ 
+    plt.xlabel(params)
+    plt.ylabel("Recall for 'Deceased'")
+    model_title = model + " Model Recall for 'Deaceased' Outcome vs tuned paramters"
+    plt.title(model_title)
+ 
+    plt.xticks(rotation=90)        
+    plt.tight_layout()     
+    plt.legend()
+    recall_deceased_save = '../plots/' + model + '_Recall_deceased_plot.png'
+    plt.savefig(recall_deceased_save)
+ 
+    plt.figure() #recall
+    plt.plot(tuned_params, mean_test_recall, label = "Test Recall", marker = 'o')
+    plt.plot(tuned_params, mean_train_recall, label = "Train Recall", marker = 'o')
+ 
+    plt.xlabel(params)
+    plt.ylabel("Overall Recall")
+    model_title = model + " Model Model Overall Recall vs tuned paramters"
+    plt.title(model_title)
+ 
+    plt.xticks(rotation=90)        
+    plt.tight_layout()     
+    plt.legend()
+ 
+    recall_save = '../plots/' + model + '_Recall_plot.png'
+    plt.savefig(recall_save)
+ 
+    plt.show()
      # elif model_name == 'RandomForest':
     #     if not (os.path.exists(model_result_path)):
     #         runRandomForest_hypertuned(train_data=train_data, val_data=val_data)
@@ -555,21 +556,37 @@ def random_forest_test(x_train, y_train, x_val, y_val, test_data): # Testing thi
 
 def lgbm_predict(x_train, y_train, x_val, y_val, test_data):
     best_paramaters = {'boosting_type': 'gbdt', 'learning_rate': 0.1, 'max_bin': 120, 'n_estimators': 300, 'num_leaves': 81}
-    test_cpy = test_data.loc[:, test_data.columns != 'Outcome']
+    test_cpy = test_data.copy()
+    # test_cpy = test_cpy.loc[:, test_cpy.columns != 'Unnamed: 0'] # extra column needs to be removed
+    # print(test_cpy.columns)
+    print(test_cpy.shape)
+    print(x_train.shape)
+    # print(x_train.columns)
 
     lg = lgbm.LGBMClassifier(boosting_type= 'gbdt', learning_rate = 0.1, max_bin = 120, n_estimators = 300, num_leaves =  81)
     model = lg.fit(x_train, y_train)
     print("Beginning to predict test data...")
-    res_data = model.predict(x_train)
+    res_data = model.predict(test_cpy)
     result_df = pd.DataFrame(res_data)
+    print(result_df.shape)
     result_df.replace({0:'deceased', 1:'hospitalized', 2:'nonhospitalized', 3:'recovered'},inplace=True)
     # result_df = 
-    np.savetxt(r'../results/prediction.txt', result_df.values, fmt='%s')
+    np.savetxt(r'../results/predictions.txt', result_df.values, fmt='%s')
 
- def check_if_file_valid(filename):
+    #Removing last blank line
+    filename = "../results/predictions.txt"
+
+    with open(filename) as f_input:
+        data = f_input.read().rstrip('\n')
+
+    with open(filename, 'w') as f_output:    
+        f_output.write(data)
+
+def check_if_file_valid(filename):
     assert filename.endswith('predictions.txt'), 'Incorrect filename'
     f = open(filename).read()
     l = f.split('\n')
+    print(len(l))
     assert len(l) == 46500, 'Incorrect number of items'
     assert (len(set(l)) == 4), 'Wrong class labels'
     return 'The predictions file is valid'

@@ -49,6 +49,8 @@ def main():
     # print(df_num)
     # print("test")
     # print(df_num[np.isinf(df_num).any(1)])
+    # print(test_data_processed.shape)
+    # print(train_data_processed.shape)
     train_data, val_data = split_train_val(train_data_processed)
 
     print("Len: ", len(test_data_processed))
@@ -61,8 +63,7 @@ def main():
     # runLGBM(x_train, y_train, x_val, y_val, test_data)
     # overfitting_check(x_train, y_train, x_val, y_val, test_data)
     # runLGBM_hypertuned(x_train, y_train, x_val, y_val, test_data)
-    # plot_result("LGBM", "../results/LGBM_tuning.csv", x_train, y_train, x_val, y_val, test_data)
-    check_if_file_valid('../results/predictions.txt')   
+    plot_result("LGBM", "../results/LGBM_tuning.csv", x_train, y_train, x_val, y_val, test_data)
     
     # # # LGBM Overfitting Check 2.4
 
@@ -81,6 +82,8 @@ def main():
 
     #For the best model
     # lgbm_predict(x_train, y_train, x_val, y_val, test_data)
+    # print("checking...")
+    # check_if_file_valid('../results/predictions.txt')   
 
 if __name__ == "__main__":
     main()
