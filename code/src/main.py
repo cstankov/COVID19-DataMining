@@ -17,7 +17,6 @@ from sklearn.metrics import make_scorer, f1_score, recall_score, precision_recal
 from sklearn.preprocessing import OneHotEncoder
 import lightgbm as lgbm
 
-
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import *
 from sklearn import metrics
@@ -59,7 +58,6 @@ def main():
     # overfittingLinearSVCcheck(x_train, y_train, x_val, y_val)
     # runLinearSVC_hypertuned(x_train, y_train, x_val, y_val)
     plot_result("LinearSVC", "../results/linearSVC_tuning.csv", x_train, y_train, x_val, y_val, test_data)
-
     
     #randomForests
     #The pkl model was too large for git buffers so I reduced the forest to only 1 tree
