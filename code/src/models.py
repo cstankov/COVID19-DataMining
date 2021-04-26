@@ -9,12 +9,10 @@ BASE_DATA = '../models/'
     
 def splitForModel(test_data, train_data, val_data, return_numpy = True, convert_categorical = True):
     print("Splitting Model...")
-    # main_train_data = pd.read_csv("../results/cases_train_processed.csv")
     train_cpy = train_data.copy()
     val_cpy = val_data.copy()
     test_cpy = test_data.copy()
 
-    #print(np.unique(train_cpy['Case-Fatality_Ratio']))
     train_cpy.drop(['Source'], axis = 1, inplace = True)
     val_cpy.drop(['Source'], axis = 1, inplace = True)
     test_cpy.drop(['Source'], axis = 1, inplace = True)
@@ -22,42 +20,22 @@ def splitForModel(test_data, train_data, val_data, return_numpy = True, convert_
     print("Doing for OUTCOME")
     train_cpy['Outcome'].replace({'deceased':0, 'hospitalized':1, 'nonhospitalized':2, 'recovered':3},inplace=True)
     val_cpy['Outcome'].replace({'deceased':0, 'hospitalized':1, 'nonhospitalized':2, 'recovered':3},inplace=True)
-
     categorical_cols = ["Sex",  "Province_State", "Country", "Combined_Key", "Date_Confirmation"]
 
-
-    enc_dict = {}
-    count = 0
-    #print(np.unique(train_cpy['Case-Fatality_Ratio']))
     if convert_categorical == True:
         for col in categorical_cols:
-
             train_cpy[col] = train_cpy[col].apply(lambda x: int(hashlib.sha1(x.encode("utf-8")).hexdigest(), 16)) % (10 ** 8)
             val_cpy[col] = val_cpy[col].apply(lambda x: int(hashlib.sha1(x.encode("utf-8")).hexdigest(), 16)) % (10 ** 8)
             test_cpy[col] = test_cpy[col].apply(lambda x: int(hashlib.sha1(x.encode("utf-8")).hexdigest(), 16)) % (10 ** 8)
 
-    
     print("Done categorical encoding...")  
-    # print(train_cpy.head(30))  
     x_train = train_cpy.loc[:, train_cpy.columns != 'Outcome']
     # test_cpy = test_cpy.loc[:, test_data.columns != 'Outcome']
     test_cpy.drop(['Outcome'], axis='columns', inplace=True)
 
-    # print(test_cpy.head(10))
-    # print("unique sex values")
-    # print(np.unique(train_cpy['Sex']))
-
-    # print("x_train")
-    # print(x_train.head(10))
     y_train = train_cpy['Outcome']
     x_val = val_cpy.loc[:, val_cpy.columns != 'Outcome']
     y_val = val_cpy['Outcome']
-
-
-    #     for col in df_num:
-    #     print(df_num.groupby(np.isinf(df_num[col])).count())
-    # train_data, val_data = split_train_val(train_data_processed)
-
 
     if return_numpy == True:
         x_train = x_train.to_numpy()
@@ -67,7 +45,6 @@ def splitForModel(test_data, train_data, val_data, return_numpy = True, convert_
         test_cpy = test_cpy.to_numpy()
 
     return x_train, y_train, x_val, y_val, test_cpy
-
 
 def printMetrics(confusion_mat, label_number):
     TN, FP, FN, TP = confusion_mat.ravel()
@@ -94,11 +71,8 @@ def printMetrics(confusion_mat, label_number):
     print("F_One: ", f_one_score)       
     print("\n\n")     
 
-
-
 def outputConfusionMatrixMetrics(confusion_mat, unique_labels):
     #From https://stackoverflow.com/questions/31324218/scikit-learn-how-to-obtain-true-positive-true-negative-false-positive-and-fal
-    # print(unique_labels)
     print("CF:\n", confusion_mat)
     print("\n\n")
 
@@ -123,7 +97,6 @@ def outputConfusionMatrixMetrics(confusion_mat, unique_labels):
     printMetrics(cf_nonhosp, 2)
     printMetrics(cf_rec, 3)
 
-
 def loadModel(ModelFileName):
     # From https://stackabuse.com/scikit-learn-save-and-restore-models/
     file_pth = os.path.relpath(BASE_DATA + ModelFileName, BASE_PATH)
@@ -138,111 +111,6 @@ def loadModel(ModelFileName):
         pickle_model = pickle.load(file)
     return pickle_model 
 
-################ LGBM MODEL ################
-def overfitting_check(x_train, y_train, x_val, y_val, test_data):
-    print("Checking for Overfitting...")
-    #From https://machinelearningmastery.com/overfitting-machine-learning-models/
-    # x_train, y_train, x_val, y_val, _ = splitForModel(test_data, train_data, val_data)
-    train_scores, test_scores = list(), list()
-
-    n_est = [500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500]
-    for d in n_est:
-        lg = lgbm.LGBMClassifier(n_estimators= d)
-        model = lg.fit(x_train, y_train)        
-        # evaluate on the train dataset
-        train_y_pred = model.predict(x_train)
-        train_acc = accuracy_score(y_train, train_y_pred)
-        train_scores.append(train_acc)
-        # evaluate on the test dataset
-        test_y_pred = model.predict(x_val)
-        test_acc = accuracy_score(y_val, test_y_pred)
-        test_scores.append(test_acc)
-        # summarize progress
-        if d == None:
-            print('>n_estimator: %s, train: %.3f, test: %.3f' % ('None', train_acc, test_acc))
-        else:
-            print('>n_estimator: %d, train: %.3f, test: %.3f' % (d, train_acc, test_acc))
-    
-    plt.plot(n_est, train_scores, '-o', label='Train')
-    plt.plot(n_est, test_scores, '-o', label='Test')
-    plt.title("LGBM Classifier Overfitting")
-    plt.xlabel("n_estimator value for LGBM Classifier")
-    plt.ylabel("Accuracy")
-    plt.legend()
-    plt.show()
-
-
-
-def LGBMModelSave(x_train, y_train, x_val, y_val, test_data):
-    # from https://www.datacamp.com/community/tutorials/adaboost-classifier-python
- 
-    # x_train, y_train, x_val, y_val, _ = splitForModel(test_data, train_data, val_data)
-    print("Running LGBM...")
-    
-    lg = lgbm.LGBMClassifier()
-    model = lg.fit(x_train, y_train)
-    print("Saving LGBM Model...")
-    # From https://stackabuse.com/scikit-learn-save-and-restore-models/
-    file_pth = os.path.relpath(BASE_DATA + pkl_lgbm_filename, BASE_PATH)
-    with open(file_pth, 'wb') as file:
-        pickle.dump(model, file)          
-
-def runLGBM(x_train, y_train, x_val, y_val, test_data):
-    # x_train, y_train, x_val, y_val, _ = splitForModel(test_data, train_data, val_data)
-    print("Running LGBM...")
-    model = loadModel(pkl_lgbm_filename)
-    
-    y_pred = model.predict(x_val)
-    print("y_pred unique:", np.unique(y_pred))
-
-    unique_labels = np.unique(y_val)
-    print(unique_labels)
-    cf = multilabel_confusion_matrix(y_val, y_pred, labels = unique_labels)
-    outputConfusionMatrixMetrics(cf, unique_labels)
-
-def runLGBM_hypertuned(x_train, y_train, x_val, y_val, test_data):
-    # x_train, y_train, x_val, y_val, _ = splitForModel(test_data, train_data, val_data)
-    print("Running LGBM Hypertuned...")
-    clf = loadModel(pkl_lgbm_filename)
-
-    custom_scoring = {"recall":make_scorer(recall_score, average = 'macro'),
-           "recall_Deceased":  make_scorer(recall_score, labels = [0],  average= None),
-           "Accuracy": make_scorer(accuracy_score),
-           "f1_score_decease": make_scorer(f1_score, labels = [0], average = None)}
-
-    gridParams_best = {
-        'learning_rate': [0.1],
-        'num_leaves': [81, 91],
-        'max_bin': [100, 120],
-        'boosting_type': ['gbdt'],
-        'n_estimators': [100, 200, 300],
-    }
-
-    gridParams2 = {
-        'objective': ['multiclass'],
-        'num_class' : [4],
-        'learning_rate': [0.1, 0.025],
-        'num_leaves': [81, 91],
-        'max_bin': [100, 120],
-        'boosting_type': ['gbdt'],
-        'n_estimators': [100, 200, 300],
-    }
-
-    lgbm_grid = GridSearchCV(clf, gridParams2, verbose = 3, cv = 5, refit = False, scoring = custom_scoring, return_train_score= True) #changed to 3 fold to make it faster
-    model = lgbm_grid.fit(x_train, y_train)
-    pd.DataFrame(lgbm_grid.cv_results_).to_csv("../results/LGBM_tuning2.csv")
-    display(pd.DataFrame(lgbm_grid.cv_results_))
-    
-    # grid_search_best_params = {'boosting_type': 'gbdt', 'learning_rate': 0.1, 'max_bin': 100, 'n_estimators': 300, 'num_leaves': 81}
-
-    # lg = lgbm.LGBMClassifier(boosting_type='gbdt', learning_rate= 0.1, max_bin= 100, n_estimators= 300, num_leaves= 81)
-    # model = lg.fit(x_train, y_train)
-    # y_pred = model.predict(x_val)
-    # unique_labels = np.unique(y_val)
-    # print(unique_labels)
-    # cf = multilabel_confusion_matrix(y_val, y_pred, labels = unique_labels)
-    # outputConfusionMatrixMetrics(cf, unique_labels)
-
 def plot_result(model_name, model_result_path, x_train, y_train, x_val, y_val, test_data):
     if (model_name == 'LGBM'):
         if not (os.path.exists(model_result_path)):
@@ -251,11 +119,17 @@ def plot_result(model_name, model_result_path, x_train, y_train, x_val, y_val, t
         tuned = list(zip(lgbm_result.param_num_leaves, lgbm_result.param_n_estimators, lgbm_result.param_max_bin))
         tuned_params = ['{}, {}, {}'.format(x,y,z) for x,y,z in tuned]
         params = "(num_leaves, n_etimators, max_bin)"
-        model = "LGBM"
-        plotFigures(lgbm_result, tuned_params, params, model)
+        plotFigures(lgbm_result, tuned_params, params, model_name)
+
     elif model_name == 'LinearSVC':
-         if not (os.path.exists(model_result_path)):
-             runLinearSVC_hypertuned(test_data, train_data = train_data, val_data = val_data)
+        if not (os.path.exists(model_result_path)):
+            runLinearSVC_hypertuned(test_data, train_data = train_data, val_data = val_data)
+        linearSVC_result = pd.read_csv(model_result_path)
+        tuned = list(zip(linearSVC_result.param_estimator__C, linearSVC_result.param_estimator__class_weight, linearSVC_result.param_estimator__tol))
+        tuned_params = ['{}, {}, {}'.format(x,y,z) for x,y,z in tuned]
+        params = "(C, n_etimators, tol)"
+        plotFigures(linearSVC_result, tuned_params, params, model_name)
+        
     else: 
         print("Invalid Model name given. Expected 'LGBM', 'LinearSVC' or 'RandomForest', got: ", model_name)
  
@@ -276,7 +150,7 @@ def plotFigures(results, tuned_params, params, model):
     plt.plot(tuned_params, mean_test_accuracy, label = "Test Accuracy", marker = 'o')
     plt.plot(tuned_params, mean_train_accuracy, label = "Train Accuracy", marker = 'o')
  
-    plt.xlabel(params) #params "(num_leaves, n_etimators, max_bin)"
+    plt.xlabel(params)
     plt.ylabel("Accuracy")
     model_title = model + " Model Accuracy vs tuned paramters"
     plt.title(model_title)
@@ -334,17 +208,98 @@ def plotFigures(results, tuned_params, params, model):
     plt.savefig(recall_save)
  
     plt.show()
-     # elif model_name == 'RandomForest':
-    #     if not (os.path.exists(model_result_path)):
-    #         runRandomForest_hypertuned(train_data=train_data, val_data=val_data)
-    #  
+
+################ LGBM MODEL ################
+
+def overfitting_check(x_train, y_train, x_val, y_val, test_data):
+    print("Checking for Overfitting...")
+    #From https://machinelearningmastery.com/overfitting-machine-learning-models/
+    train_scores, test_scores = list(), list()
+    n_est = [500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500]
+    for d in n_est:
+        lg = lgbm.LGBMClassifier(n_estimators= d)
+        model = lg.fit(x_train, y_train)        
+        train_y_pred = model.predict(x_train)
+        train_acc = accuracy_score(y_train, train_y_pred)
+        train_scores.append(train_acc)
+        test_y_pred = model.predict(x_val)
+        test_acc = accuracy_score(y_val, test_y_pred)
+        test_scores.append(test_acc)
+        if d == None:
+            print('>n_estimator: %s, train: %.3f, test: %.3f' % ('None', train_acc, test_acc))
+        else:
+            print('>n_estimator: %d, train: %.3f, test: %.3f' % (d, train_acc, test_acc))
+    
+    plt.plot(n_est, train_scores, '-o', label='Train')
+    plt.plot(n_est, test_scores, '-o', label='Test')
+    plt.title("LGBM Classifier Overfitting")
+    plt.xlabel("n_estimator value for LGBM Classifier")
+    plt.ylabel("Accuracy")
+    plt.legend()
+    plt.show()
+
+def LGBMModelSave(x_train, y_train, x_val, y_val, test_data):
+    # from https://www.datacamp.com/community/tutorials/adaboost-classifier-python
+    print("Running LGBM...")
+    lg = lgbm.LGBMClassifier()
+    model = lg.fit(x_train, y_train)
+
+    print("Saving LGBM Model...")
+    # From https://stackabuse.com/scikit-learn-save-and-restore-models/
+    file_pth = os.path.relpath(BASE_DATA + pkl_lgbm_filename, BASE_PATH)
+    with open(file_pth, 'wb') as file:
+        pickle.dump(model, file)          
+
+def runLGBM(x_train, y_train, x_val, y_val, test_data):
+    # x_train, y_train, x_val, y_val, _ = splitForModel(test_data, train_data, val_data)
+    print("Running LGBM...")
+    model = loadModel(pkl_lgbm_filename)
+    y_pred = model.predict(x_val)
+
+    print("y_pred unique:", np.unique(y_pred))
+    unique_labels = np.unique(y_val)
+
+    print(unique_labels)
+    cf = multilabel_confusion_matrix(y_val, y_pred, labels = unique_labels)
+    outputConfusionMatrixMetrics(cf, unique_labels)
+
+def runLGBM_hypertuned(x_train, y_train, x_val, y_val, test_data):
+    print("Running LGBM Hypertuned...")
+    clf = loadModel(pkl_lgbm_filename)
+
+    custom_scoring = {"recall":make_scorer(recall_score, average = 'macro'),
+           "recall_Deceased":  make_scorer(recall_score, labels = [0],  average= None),
+           "Accuracy": make_scorer(accuracy_score),
+           "f1_score_decease": make_scorer(f1_score, labels = [0], average = None)}
+
+    gridParams_best = {
+        'learning_rate': [0.1],
+        'num_leaves': [81, 91],
+        'max_bin': [100, 120],
+        'boosting_type': ['gbdt'],
+        'n_estimators': [100, 200, 300],
+    }
+
+    gridParams2 = {
+        'objective': ['multiclass'],
+        'num_class' : [4],
+        'learning_rate': [0.1, 0.025],
+        'num_leaves': [81, 91],
+        'max_bin': [100, 120],
+        'boosting_type': ['gbdt'],
+        'n_estimators': [100, 200, 300],
+    }
+
+    lgbm_grid = GridSearchCV(clf, gridParams2, verbose = 3, cv = 5, refit = False, scoring = custom_scoring, return_train_score= True) #changed to 3 fold to make it faster
+    model = lgbm_grid.fit(x_train, y_train)
+    pd.DataFrame(lgbm_grid.cv_results_).to_csv("../results/LGBM_tuning2.csv")
+    display(pd.DataFrame(lgbm_grid.cv_results_))
 
 ################ LINEAR SVC MODEL ################
  
 def linearSVMModelSave(x_train, y_train, x_val, y_val):
     # from https://scikit-learn.org/stable/modules/generated/sklearn.svm.LinearSVC.html
     # from https://stackoverflow.com/questions/31617530/multiclass-linear-svm-in-python-that-return-probability
-    # x_train, y_train, x_val, y_val = splitForModel(train_data, val_data)
     
     print("Running linear SVC...")
     clf = OneVsRestClassifier(LinearSVC(dual=False))
@@ -357,34 +312,26 @@ def linearSVMModelSave(x_train, y_train, x_val, y_val):
         pickle.dump(model, file)  
  
 def runLinearSVCClassifier(x_train, y_train, x_val, y_val):
-    # x_train, y_train, x_val, y_val = splitForModel(train_data, val_data)
     model = loadModel(pkl_linearSVC_filename)
- 
     y_pred = model.predict(x_val)
- 
     unique_labels = np.unique(y_val)
- 
     cf = multilabel_confusion_matrix(y_val, y_pred, labels = unique_labels)
     outputConfusionMatrixMetrics(cf, unique_labels)
  
 def overfittingLinearSVCcheck(x_train, y_train, x_val, y_val):
     print("Checking for Linear SVC Overfitting...")
     #From https://machinelearningmastery.com/overfitting-machine-learning-models/
-    # x_train, y_train, x_val, y_val = splitForModel(train_data, val_data)
     train_scores, test_scores = list(), list()
     C_value = [0.1, 0.5, 1, 2, 5, 10, 20, 30, 50, 100]
     for c in C_value:
         clf = OneVsRestClassifier(LinearSVC(C=c, dual=False))
         model = clf.fit(x_train, y_train)
-         # evaluate on the train dataset
         train_y_pred = model.predict(x_train)
         train_acc = accuracy_score(y_train, train_y_pred)
         train_scores.append(train_acc)
-        # evaluate on the test dataset
         test_y_pred = model.predict(x_val)
         test_acc = accuracy_score(y_val, test_y_pred)
         test_scores.append(test_acc)
-        # summarize progress
         print('C value: %f, train: %.3f, test: %.3f' % (c, train_acc, test_acc))
     
     plt.plot(C_value, train_scores, '-o', label='Train')
@@ -396,9 +343,7 @@ def overfittingLinearSVCcheck(x_train, y_train, x_val, y_val):
     plt.show()
  
 def runLinearSVC_hypertuned(x_train, y_train, x_val, y_val):
-    # x_train, y_train, x_val, y_val = splitForModel(train_data, val_data)
     clf = loadModel(pkl_linearSVC_filename)
- 
     gridParams = {
         "estimator__C" : [0.01, 0.1, 1],
         "estimator__tol" : [0.00001, 0.0001, 0.001],
@@ -417,9 +362,8 @@ def runLinearSVC_hypertuned(x_train, y_train, x_val, y_val):
     pd.DataFrame(grid.cv_results_).to_csv("../results/linearSVC_tuning.csv")
     display(pd.DataFrame(grid.cv_results_))
 
-
-
 ################ RANDOM FOREST MODEL ################
+
 def loadForest():
     file_pth = os.path.relpath(BASE_DATA + pkl_ranforest_filename, BASE_PATH)
     pickle_model = None
@@ -431,30 +375,12 @@ def loadForest():
 def randomForestModel(x_train, y_train, x_val, y_val, test_data):
     print("entering forest")
     file_pth = os.path.relpath(BASE_DATA + pkl_ranforest_filename, BASE_PATH)
-    # x_train, y_train, x_val, y_val, _= splitForModel(test_data, train_data, val_data)
-    model = RandomForestClassifier(n_estimators = 1)        #Please remove this parameter here to get default model of 100 trees
+    model = RandomForestClassifier(n_estimators = 1)        
     model = model.fit(x_train, y_train)
     with open(file_pth, 'wb') as file:
-        pickle.dump(model, file)  
- 
- 
-    #GRIDSCORE FINDING THE OPTIMAL VALUES
-    # param_grid = { 'n_estimators': [200, 400, 500],
-    #               'max_features': ['auto', 'log2'],
-    #               'oob_score': [True]
-    # }
-    # grid = GridSearchCV(model, param_grid, refit = True, verbose = 3,n_jobs=-1)
-    # grid.fit(x_train, y_train) 
-    # # print best parameter after tuning 
-    # print("oob score= ", grid.oob_score)
-    # print("score = ", grid.score)
-    # print(grid.best_params_) 
-    # grid_pred = grid.predict(x_val) 
- 
- 
+        pickle.dump(model, file)   
  
 def runRandomForestClassifier(x_train, y_train, x_val, y_val, test_data):
-    # x_train, y_train, x_val, y_val, _= splitForModel(test_data, train_data, val_data)
     model = loadForest()
     if (model==None):
         print("ERROR: model loaded Nothing")
@@ -463,46 +389,17 @@ def runRandomForestClassifier(x_train, y_train, x_val, y_val, test_data):
         cf = confusion_matrix(y_val, y_pred)
         unique_labels = np.unique(y_val)
         outputConfusionMatrixMetrics(cf, unique_labels)
-        # x_test, y_test, bleh, bleh2 = splitForModel(train_data, val_data)
-        # score = []
-        # test_score = []
-        # print("starting to train")
-        # for i in range(1,11,1):
-        #     clf = RandomForestClassifier(n_estimators = i)
-        #     print('running estimator = ', i)
-        #     model = clf.fit(x_train, y_train)
-        #     print("starting to score...")
-        #     score1= model.score(x_train, y_train)
-        #     score2=model.score(x_val, y_val)
-        #     print(f"score1 = {score1} score2 = {score2}")
-        #     score.append(score1)
-        #     test_score.append(score2)
-        #     #file_pth = os.path.relpath(BASE_DATA + pkl_ranforest_filename, BASE_PATH)
-        #     # y_pred = model.predict(x_val)
-        #     # cf = confusion_matrix(y_val, y_pred)
-        #     # outputConfusionMatrixMetrics(cf)
- 
-        # num_trees = [_ for _ in range(1,11,1) ]
-        # plt.plot(num_trees, score, 'r', num_trees, test_score, 'b')
-        # plt.xlabel('number of trees')
-        # plt.ylabel('Accuracy')
-        # plt.show()
 
 def random_forest_test_hparam(x_train, y_train, x_val, y_val, test_data):
-
-    ####Parameters
     max_depth = [x for x in range(10, 30, 5) ]
     n_estimators = [x for x in range(50, 175, 50) ]
     min_samples_split = [2, 4]
-
 
     rf = RandomForestClassifier(max_depth=15, n_estimators=50, min_samples_split=2)
     rf.fit(x_train, y_train)
     print("FIT DONE")
     return
 
-    ###################################### now finding the best value ############################
-    #GRIDSCORE FINDING THE OPTIMAL VALUES
     param_grid = { 'n_estimators': n_estimators ,
                   'max_depth': max_depth,
                   'min_samples_split': min_samples_split
@@ -524,8 +421,7 @@ def random_forest_test_hparam(x_train, y_train, x_val, y_val, test_data):
 #done with best parameter
 # {'max_depth': 25, 'min_samples_split': 2, 'n_estimators': 50}
 
-def random_forest_test(x_train, y_train, x_val, y_val, test_data): # Testing thinking random forest is best
-    # x_train, y_train, x_val, y_val ,le = splitForModel(train_data, val_data )
+def random_forest_test(x_train, y_train, x_val, y_val, test_data): 
     return
     le_name_mapping = dict(zip(le.classes_, le.transform(le.classes_)))
     print("Mapping:")
@@ -557,11 +453,8 @@ def random_forest_test(x_train, y_train, x_val, y_val, test_data): # Testing thi
 def lgbm_predict(x_train, y_train, x_val, y_val, test_data):
     best_paramaters = {'boosting_type': 'gbdt', 'learning_rate': 0.1, 'max_bin': 120, 'n_estimators': 300, 'num_leaves': 81}
     test_cpy = test_data.copy()
-    # test_cpy = test_cpy.loc[:, test_cpy.columns != 'Unnamed: 0'] # extra column needs to be removed
-    # print(test_cpy.columns)
     print(test_cpy.shape)
     print(x_train.shape)
-    # print(x_train.columns)
 
     lg = lgbm.LGBMClassifier(boosting_type= 'gbdt', learning_rate = 0.1, max_bin = 120, n_estimators = 300, num_leaves =  81)
     model = lg.fit(x_train, y_train)
@@ -570,10 +463,7 @@ def lgbm_predict(x_train, y_train, x_val, y_val, test_data):
     result_df = pd.DataFrame(res_data)
     print(result_df.shape)
     result_df.replace({0:'deceased', 1:'hospitalized', 2:'nonhospitalized', 3:'recovered'},inplace=True)
-    # result_df = 
     np.savetxt(r'../results/predictions.txt', result_df.values, fmt='%s')
-
-    #Removing last blank line
     filename = "../results/predictions.txt"
 
     with open(filename) as f_input:
