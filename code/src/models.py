@@ -295,6 +295,29 @@ def runLGBM_hypertuned(x_train, y_train, x_val, y_val, test_data):
     pd.DataFrame(lgbm_grid.cv_results_).to_csv("../results/LGBM_tuning2.csv")
     display(pd.DataFrame(lgbm_grid.cv_results_))
 
+def lgbm_predict(x_train, y_train, x_val, y_val, test_data):
+ 
+    best_paramaters = {'boosting_type': 'gbdt', 'learning_rate': 0.1, 'max_bin': 120, 'n_estimators': 300, 'num_leaves': 81}
+    test_cpy = test_data.copy()
+    print(test_cpy.shape)
+    print(x_train.shape)
+ 
+    lg = lgbm.LGBMClassifier(boosting_type= 'gbdt', learning_rate = 0.1, max_bin = 120, n_estimators = 300, num_leaves =  81)
+    model = lg.fit(x_train, y_train)
+    print("Beginning to predict test data...")
+    res_data = model.predict(test_cpy)
+    result_df = pd.DataFrame(res_data)
+    print(result_df.shape)
+    result_df.replace({0:'deceased', 1:'hospitalized', 2:'nonhospitalized', 3:'recovered'},inplace=True)
+    np.savetxt('../results/predictions.txt', result_df.values, fmt='%s')
+    filename = "../results/predictions.txt"
+ 
+    with open(filename) as f_input:
+        data = f_input.read().rstrip('\n')
+ 
+    with open(filename, 'w') as f_output:    
+        f_output.write(data)
+
 ################ LINEAR SVC MODEL ################
  
 def linearSVMModelSave(x_train, y_train, x_val, y_val):
@@ -391,19 +414,29 @@ def runRandomForestClassifier(x_train, y_train, x_val, y_val, test_data):
         outputConfusionMatrixMetrics(cf, unique_labels)
 
 def random_forest_test_hparam(x_train, y_train, x_val, y_val, test_data):
-    max_depth = [x for x in range(10, 30, 5) ]
+
+    ####Parameters
+    max_depth = [x for x in range(20, 35, 5) ]
     n_estimators = [x for x in range(50, 175, 50) ]
     min_samples_split = [2, 4]
+    # max_depth = [55]
+    # n_estimators = [75, 100]
+    # min_samples_split = [2]
 
-    rf = RandomForestClassifier(max_depth=15, n_estimators=50, min_samples_split=2)
-    rf.fit(x_train, y_train)
-    print("FIT DONE")
-    return
 
+    rf = RandomForestClassifier()
+
+    ###################################### now finding the best value ############################
+    #GRIDSCORE FINDING THE OPTIMAL VALUES
     param_grid = { 'n_estimators': n_estimators ,
                   'max_depth': max_depth,
                   'min_samples_split': min_samples_split
     }
+    # param_grid = { 'n_estimators': [10],
+    #               'max_depth': [10],
+    #               'min_samples_split': [2]
+    # }
+
 
     ###################custom scoring ####################
     custom_scoring = {"recall": make_scorer(recall_score, average = "macro"), 
@@ -415,68 +448,77 @@ def random_forest_test_hparam(x_train, y_train, x_val, y_val, test_data):
     grid = GridSearchCV(estimator=rf, scoring = custom_scoring, param_grid=param_grid, cv=5, verbose = 3,refit = False, return_train_score=True)
     grid.fit(x_train, y_train) 
     # print("Best parameters for random forests:\n", grid.best_params_) 
-    pd.DataFrame(grid.cv_results_).to_csv("Random_Forest_GSCVDepth.csv")
+    pd.DataFrame(grid.cv_results_).to_csv("../results/Random_Forest_GSCVDepth.csv", index = False)
     print(pd.DataFrame(grid.cv_results_))
 
 #done with best parameter
-# {'max_depth': 25, 'min_samples_split': 2, 'n_estimators': 50}
+# {'max_depth': 55, 'min_samples_split': 2, 'n_estimators': 50}
 
-def random_forest_test(x_train, y_train, x_val, y_val, test_data): 
-    return
-    le_name_mapping = dict(zip(le.classes_, le.transform(le.classes_)))
-    print("Mapping:")
-    print(le_name_mapping)
-    print("\n\n")
-    test_cpy = test_data.loc[:, test_data.columns != 'Outcome']
-    test_cpy = test_cpy.apply(le.fit_transform)
-    # print(test_cpy.head(20) )
-    test_cpy = test_cpy.to_numpy()
+def random_forest_predict(x_train, y_train, test_data): # Testing thinking random forest is best
+    outcome_dict = {
+        0:'deceased',
+        1:'hospitalized',
+        2:'nonhospitalized',
+        3:'recovered'
+    }
 
-    le_name_mapping = dict(zip(le.classes_, le.transform(le.classes_)))
-    print("Mapping:")
-    print(le_name_mapping)
-    print("\n\n")
-
-    rf = RandomForestClassifier(n_estimators=50, max_depth=25, min_samples_split=2)
+    rf = RandomForestClassifier(n_estimators=50, max_depth=55, min_samples_split=2)
     print("beginning to build model...")
-    print(le.inverse_transform(y_train) [5])
     model = rf.fit(x_train, y_train)
     print("Beginning to predict test data...")
-    res_data = model.predict(x_train)
-    pd.DataFrame(res_data).to_csv("test_data_predictionsNum.csv")
-    res_data = le.inverse_transform(res_data)
-    print("test data prediction complete")
-    pd.DataFrame(res_data).to_csv("test_data_predictions.csv")
-    return        
+    res_data = model.predict(test_data)
 
-
-def lgbm_predict(x_train, y_train, x_val, y_val, test_data):
-    best_paramaters = {'boosting_type': 'gbdt', 'learning_rate': 0.1, 'max_bin': 120, 'n_estimators': 300, 'num_leaves': 81}
-    test_cpy = test_data.copy()
-    print(test_cpy.shape)
-    print(x_train.shape)
-
-    lg = lgbm.LGBMClassifier(boosting_type= 'gbdt', learning_rate = 0.1, max_bin = 120, n_estimators = 300, num_leaves =  81)
-    model = lg.fit(x_train, y_train)
-    print("Beginning to predict test data...")
-    res_data = model.predict(test_cpy)
-    result_df = pd.DataFrame(res_data)
-    print(result_df.shape)
-    result_df.replace({0:'deceased', 1:'hospitalized', 2:'nonhospitalized', 3:'recovered'},inplace=True)
-    np.savetxt(r'../results/predictions.txt', result_df.values, fmt='%s')
-    filename = "../results/predictions.txt"
-
-    with open(filename) as f_input:
+    predict_fp = '../results/predictions.txt'
+    res_data = np.array([outcome_dict[xi] for xi in res_data])
+    np.savetxt(predict_fp, res_data, fmt='%s')
+    with open(predict_fp) as f_input:
         data = f_input.read().rstrip('\n')
 
-    with open(filename, 'w') as f_output:    
+    with open(predict_fp, 'w') as f_output:
         f_output.write(data)
+    check_if_file_valid(predict_fp)
+    return        
+
+def plot_ranforest_data():
+    df = pd.read_csv('../results/Random_Forest_GSCVDepth.csv')
+    f1_deceased_test = df['mean_test_f1_score_decease'].to_numpy()
+    f1_deceased_train = df['mean_train_f1_score_decease'].to_numpy()
+
+    recall_deceased_test = df['mean_test_recall_Deceased'].to_numpy()
+    recall_deceased_train = df['mean_test_recall_Deceased'].to_numpy()
+
+    accuracy_train = df['mean_test_Accuracy'].to_numpy()
+    accuracy_test = df['mean_train_Accuracy'].to_numpy()
+    print(accuracy_test)
+    
+    params = df['params'].to_numpy()
+    print("plotting...")
+    plt.figure(1)
+    plt.title("Random Forest: F1_Score on Deceased ")
+    plt.plot(params, f1_deceased_test, color = "blue", label='test')
+    plt.plot(params, f1_deceased_train, color = "orange", label = "train")
+    plt.xticks(rotation=90)
+    plt.legend()
+    plt.show()
+    
+    plt.figure(2)
+    plt.title("Random Forest: Recall deceased")
+    plt.plot(params, recall_deceased_test, color = "blue")
+    plt.plot(params, recall_deceased_train, color = "orange")
+    plt.legend()
+
+    plt.figure(3)
+    plt.title("Random Forest: Accuracy ")
+    plt.plot(params, accuracy_test, color = "blue")
+    plt.plot(params, accuracy_train, color = "orange")
+    plt.legend()
+    return
 
 def check_if_file_valid(filename):
     assert filename.endswith('predictions.txt'), 'Incorrect filename'
     f = open(filename).read()
     l = f.split('\n')
-    print(len(l))
+    print("length = ", len(l))
     assert len(l) == 46500, 'Incorrect number of items'
     assert (len(set(l)) == 4), 'Wrong class labels'
     return 'The predictions file is valid'

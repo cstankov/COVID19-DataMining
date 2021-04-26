@@ -15,7 +15,7 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import multilabel_confusion_matrix
 from sklearn.metrics import make_scorer, f1_score, recall_score, precision_recall_fscore_support, precision_score
 from sklearn.preprocessing import OneHotEncoder
-import lightgbm as lgbm
+#import lightgbm as lgbm
 
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import *
@@ -57,14 +57,15 @@ def main():
     # runLinearSVCClassifier(x_train, y_train, x_val, y_val)
     # overfittingLinearSVCcheck(x_train, y_train, x_val, y_val)
     # runLinearSVC_hypertuned(x_train, y_train, x_val, y_val)
-    plot_result("LinearSVC", "../results/linearSVC_tuning.csv", x_train, y_train, x_val, y_val, test_data)
+    #plot_result("LinearSVC", "../results/linearSVC_tuning.csv", x_train, y_train, x_val, y_val, test_data)
     
     #randomForests
     #The pkl model was too large for git buffers so I reduced the forest to only 1 tree
     #To change this, please go to models.py, line 275 and change the parameter
     # randomForestModelx_train, y_train, x_val, y_val, test_data)
     # runRandomForestClassifier(x_train, y_train, x_val, y_val, test_data)
-    # random_forest_test_hparam(x_train, y_train, x_val, y_val, test_data)
+    #random_forest_test_hparam(x_train, y_train, x_val, y_val, test_data)
+    random_forest_predict(x_train=x_train, y_train=y_train, test_data=test_data)
 
     #For the best model
     # lgbm_predict(x_train, y_train, x_val, y_val, test_data)
