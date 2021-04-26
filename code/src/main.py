@@ -15,6 +15,7 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import multilabel_confusion_matrix
 from sklearn.metrics import make_scorer, f1_score, recall_score, precision_recall_fscore_support, precision_score
 from sklearn.preprocessing import OneHotEncoder
+import lightgbm as lgbm
 
 
 from sklearn.model_selection import train_test_split
@@ -58,17 +59,17 @@ def main():
     
     # LGBMModelSave(x_train, y_train, x_val, y_val, test_data)
     # runLGBM(x_train, y_train, x_val, y_val, test_data)
+    # overfitting_check(x_train, y_train, x_val, y_val, test_data)
     # runLGBM_hypertuned(x_train, y_train, x_val, y_val, test_data)
+    # plot_result("LGBM", "../results/LGBM_tuning.csv", x_train, y_train, x_val, y_val, test_data)
+    check_if_file_valid('../results/predictions.txt')   
     
     # # # LGBM Overfitting Check 2.4
-    # overfitting_check(x_train, y_train, x_val, y_val, test_data)
 
     # Linear SVC
     # linearSVMModelSave(x_train, y_train, x_val, y_val, test_data)
     # runLinearSVCClassifier(x_train, y_train, x_val, y_val, test_data)
     
-    # plot_result(model_name = "LGBM", model_result_path= "../results/LGBM_tuning.csv", x_train, y_train, x_val, y_val, test_data)
-    # runDecisionTreeModel(x_train, y_train, x_val, y_val, test_data);
     # runLinearSVC_hypertuned(x_train, y_train, x_val, y_val, test_data);
     #randomForests
 
@@ -76,7 +77,10 @@ def main():
     #To change this, please go to models.py, line 275 and change the parameter
     # randomForestModelx_train, y_train, x_val, y_val, test_data)
     # runRandomForestClassifier(x_train, y_train, x_val, y_val, test_data)
-    random_forest_test_hparam(x_train, y_train, x_val, y_val, test_data)
+    # random_forest_test_hparam(x_train, y_train, x_val, y_val, test_data)
+
+    #For the best model
+    # lgbm_predict(x_train, y_train, x_val, y_val, test_data)
 
 if __name__ == "__main__":
     main()

@@ -200,134 +200,6 @@ def runLGBM_hypertuned(x_train, y_train, x_val, y_val, test_data):
     print("Running LGBM Hypertuned...")
     clf = loadModel(pkl_lgbm_filename)
 
-    gridParams1 = {
-    'learning_rate': [0.1, 0.25, 0.5],
-    'num_leaves': [10, 20, 30],
-    'max_bin': [2, 5, 10],
-    'boosting_type': ['gbdt', 'dart'],
-    'n_estimators': [100, 200, 300],
-    }
-
-    gridParams2 = {
-    'learning_rate': [0.1, 0.25, 0.5],
-    # 'num_leaves': [10, 20, 30],
-    'max_bin': [10],
-    'boosting_type': ['gbdt', 'dart'],
-    'n_estimators': [100, 200, 300],
-    }
-
-    gridParams3 = {
-    'learning_rate': [0.1, 0.05],
-    # 'num_leaves': [10, 20, 30],
-    'max_bin': [10, 20, 30],
-    'boosting_type': ['gbdt', 'dart'],
-    'n_estimators': [100],
-    }
-
-    gridParams4 = {
-    'learning_rate': [0.1],
-    # 'num_leaves': [10, 20, 30],
-    'max_bin': [10, 20, 30],
-    'boosting_type': ['gbdt', 'dart'],
-    'n_estimators': [100, 200, 300],
-    }
-
-    gridParams5 = {
-    'learning_rate': [0.1],
-    # 'num_leaves': [10, 20, 30],
-    'max_bin': [30, 40 ,50],
-    'boosting_type': ['gbdt', 'dart'],
-    'n_estimators': [300, 400, 500],
-    }
-
-    gridParams6 = {
-    'learning_rate': [0.1],
-    'num_leaves': [30, 40, 50],
-    'max_bin': [40, 50 ,70],
-    'boosting_type': ['gbdt'],
-    'n_estimators': [400, 500, 600],
-    }
-
-    gridParams7 = {
-    'learning_rate': [0.1, 0.25],
-    'num_leaves': [30],
-    'max_bin': [40, 50 , 70],
-    'boosting_type': ['gbdt'],
-    'n_estimators': [400, 500, 600],
-    }
-
-    gridParams8 = {
-    'learning_rate': [0.1],
-    'num_leaves': [50],
-    'max_bin': [40],
-    'boosting_type': ['gbdt'],
-    'n_estimators': [450, 600, 800],
-    }
-
-    gridParams9 = {
-    'learning_rate': [0.1, 0.05],
-    'num_leaves': [50],
-    'max_bin': [10, 50],
-    'boosting_type': ['gbdt'],
-    'n_estimators': [850, 900, 1000],
-    }
-
-    gridParams10 = {
-    'learning_rate': [0.1],
-    'num_leaves': [50],
-    'max_bin': [10, 30, 50],
-    'boosting_type': ['gbdt', 'dart'],
-    'n_estimators': [850, 900, 1000],
-    }
-
-    gridParams11 = {
-    # 'learning_rate': [0.1],
-    'num_leaves': [21, 31, 41],
-    # 'max_bin': [10, 30, 50],
-    'boosting_type': ['gbdt', 'dart'],
-    'n_estimators': [50, 100],
-    }
-
-    gridParams12 = {
-    'learning_rate': [0.1],
-    'num_leaves': [41, 51, 61],
-    'max_bin': [10, 30, 50],
-    'boosting_type': ['gbdt', 'dart'],
-    'n_estimators': [100],
-    }
-
-
-    gridParams13 = {
-    'learning_rate': [0.1],
-    'num_leaves': [71, 81, 101],
-    'max_bin': [60, 75],
-    'boosting_type': ['gbdt', 'dart', 'goss'],
-    'n_estimators': [100],
-    }
-
-    gridParams14 = {
-    'learning_rate': [0.1],
-    'num_leaves': [81, 91],
-    'max_bin': [100, 120],
-    'boosting_type': ['dart'],
-    'n_estimators': [100, 200, 300],
-    }
-
-    gridParams15 = {
-    'learning_rate': [0.1],
-    'num_leaves': [81,91],
-    'max_bin': [110, 130],
-    'boosting_type': ['gbdt'],
-    'n_estimators': [500, 750],
-    }
-    # This grid params is for test only
-    # gridParams = {
-    # 'learning_rate': [ 0.1],
-    # 'num_leaves': [10],
-    # 'max_bin': [10],
-    # 'boosting_type' : ['dart'],
-    # }
-
     custom_scoring = {"recall":make_scorer(recall_score, average = 'macro'),
            "recall_Deceased":  make_scorer(recall_score, labels = [0],  average= None),
            "Accuracy": make_scorer(accuracy_score),
@@ -341,8 +213,15 @@ def runLGBM_hypertuned(x_train, y_train, x_val, y_val, test_data):
     'n_estimators': [100, 200, 300],
     }
 
+    gridParams2 = {
+    'learning_rate': [0.1],
+    'num_leaves': [71, 81],
+    'max_bin': [91, 101],
+    'boosting_type': ['gbdt'],
+    'n_estimators': [300, 450],
+    }
 
-    lgbm_grid = GridSearchCV(clf, gridParams_best, verbose = 3, cv = 5, refit = False, scoring = custom_scoring, return_train_score= True)
+    lgbm_grid = GridSearchCV(clf, gridParams, verbose = 3, cv = 5, refit = False, scoring = custom_scoring, return_train_score= True)
     model = lgbm_grid.fit(x_train, y_train)
     pd.DataFrame(lgbm_grid.cv_results_).to_csv("../results/LGBM_tuning.csv")
     display(pd.DataFrame(lgbm_grid.cv_results_))
@@ -379,18 +258,26 @@ def plot_result(model_name, model_result_path, x_train, y_train, x_val, y_val, t
         lgbm_mean_test_f1_deceased = list(lgbm_result['mean_test_f1_score_decease'])
         lgbm_mean_train_f1_deceased = list(lgbm_result['mean_train_f1_score_decease'])
 
+        lgbm_mean_test_recal = list(lgbm_result['mean_test_recall'])
+        lgbm_mean_train_recal = list(lgbm_result['mean_train_recall'])
+
+        lgbm_mean_test_recall_deceased = list(lgbm_result['mean_test_recall_Deceased'])
+        lgbm_mean_train_recall_deceased = list(lgbm_result['mean_train_recall_Deceased'])
         # print(lgbm_mean_test_accuracy)
+
         plt.figure() #accuracy
         plt.plot(tuned_params, lgbm_mean_test_accuracy, label = "Test Accuracy", marker = 'o')
         plt.plot(tuned_params, lgbm_mean_train_accuracy, label = "Train Accuracy", marker = 'o')
 
         plt.xlabel("(num_leaves, n_etimators, max_bin)")
         plt.ylabel("Accuracy")
-        plt.title("LGBM Model Accuracy vs tunes paramters")
+        plt.title("LGBM Model Accuracy vs tuned paramters")
 
         plt.xticks(rotation=90)   
         plt.tight_layout()     
         plt.legend()
+
+        plt.savefig('../plots/LGBM_accuracy_plot.png')
 
         plt.figure() #f1-score-deceased
         plt.plot(tuned_params, lgbm_mean_test_f1_deceased, label = "Test F1 Score for Deceased", marker = 'o')
@@ -398,12 +285,43 @@ def plot_result(model_name, model_result_path, x_train, y_train, x_val, y_val, t
 
         plt.xlabel("(num_leaves, n_etimators, max_bin)")
         plt.ylabel("F1 SCore for 'Deceased'")
-        plt.title("LGBM Model F1 Score for 'Deaceased' Outcome vs tunes paramters")
+        plt.title("LGBM Model F1 Score for 'Deaceased' Outcome vs tuned paramters")
 
         plt.xticks(rotation=90)        
         plt.tight_layout()     
         plt.legend()
 
+        plt.savefig('../plots/LGBM_F1_score_deceased_plot.png')
+
+        plt.figure() #recall-deceased
+        plt.plot(tuned_params, lgbm_mean_test_recall_deceased, label = "Test Recall for Deceased", marker = 'o')
+        plt.plot(tuned_params, lgbm_mean_train_recall_deceased, label = "Train Recall for Deceased", marker = 'o')
+
+        plt.xlabel("(num_leaves, n_etimators, max_bin)")
+        plt.ylabel("Recall for 'Deceased'")
+        plt.title("LGBM Model Recall for 'Deaceased' Outcome vs tuned paramters")
+
+        plt.xticks(rotation=90)        
+        plt.tight_layout()     
+        plt.legend()
+
+        plt.savefig('../plots/LGBM_Recall_deceased_plot.png')
+
+        plt.figure() #recall
+        plt.plot(tuned_params, lgbm_mean_test_recal, label = "Test Recall", marker = 'o')
+        plt.plot(tuned_params, lgbm_mean_train_recal, label = "Train Recall", marker = 'o')
+
+        plt.xlabel("(num_leaves, n_etimators, max_bin)")
+        plt.ylabel("Overall Recall")
+        plt.title("LGBM Model Overall Recall vs tuned paramters")
+
+        plt.xticks(rotation=90)        
+        plt.tight_layout()     
+        plt.legend()
+
+        plt.savefig('../plots/LGBM_Recall_plot.png')
+
+        
 
         plt.show()
 
@@ -420,22 +338,6 @@ def plot_result(model_name, model_result_path, x_train, y_train, x_val, y_val, t
     #         runRandomForest_hypertuned(train_data=train_data, val_data=val_data)
     #  
 
-
-
-def runDecisionTreeModel(x_train, y_train, x_val, y_val, test_data):
-    # x_train, y_train, x_val, y_val, _ = splitForModel(test_data, train_data, val_data)
-
-    print("Running DT...")
-    custom_scoring = {"recall":make_scorer(recall_score, average = 'macro'),
-           "recall_Deceased":  make_scorer(recall_score, labels = [0],  average= None),
-           "Accuracy": make_scorer(accuracy_score),
-           "f1_score_decease": make_scorer(f1_score, labels = [0], average = None)}
-    # params = {'max_leaf_nodes': list(range(2, 100)), 'min_samples_split': [2, 3, 4]}
-    params = {'criterion': ('gini', 'entropy'), 'min_samples_leaf': [1, 2, 3], 'max_features': [0.4, 0.6, 0.8]}
-    grid = GridSearchCV(DecisionTreeClassifier(random_state=42), params, verbose = 3, cv = 5, refit = False, scoring = custom_scoring, return_train_score= True)
-    model = grid.fit(x_train, y_train)
-    pd.DataFrame(grid.cv_results_).to_csv("../results/DT_GSCV.csv")
-    display(pd.DataFrame(grid.cv_results_))
 ################ LINEAR SVC MODEL ################
  
 def linearSVMModelSave(x_train, y_train, x_val, y_val):
@@ -649,3 +551,25 @@ def random_forest_test(x_train, y_train, x_val, y_val, test_data): # Testing thi
     print("test data prediction complete")
     pd.DataFrame(res_data).to_csv("test_data_predictions.csv")
     return        
+
+
+def lgbm_predict(x_train, y_train, x_val, y_val, test_data):
+    best_paramaters = {'boosting_type': 'gbdt', 'learning_rate': 0.1, 'max_bin': 120, 'n_estimators': 300, 'num_leaves': 81}
+    test_cpy = test_data.loc[:, test_data.columns != 'Outcome']
+
+    lg = lgbm.LGBMClassifier(boosting_type= 'gbdt', learning_rate = 0.1, max_bin = 120, n_estimators = 300, num_leaves =  81)
+    model = lg.fit(x_train, y_train)
+    print("Beginning to predict test data...")
+    res_data = model.predict(x_train)
+    result_df = pd.DataFrame(res_data)
+    result_df.replace({0:'deceased', 1:'hospitalized', 2:'nonhospitalized', 3:'recovered'},inplace=True)
+    # result_df = 
+    np.savetxt(r'../results/prediction.txt', result_df.values, fmt='%s')
+
+ def check_if_file_valid(filename):
+    assert filename.endswith('predictions.txt'), 'Incorrect filename'
+    f = open(filename).read()
+    l = f.split('\n')
+    assert len(l) == 46500, 'Incorrect number of items'
+    assert (len(set(l)) == 4), 'Wrong class labels'
+    return 'The predictions file is valid'
