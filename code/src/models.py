@@ -484,41 +484,50 @@ def plot_ranforest_data():
     df = pd.read_csv('../results/Random_Forest_Tuning.csv')
     f1_deceased_test = df['mean_test_f1_score_decease'].to_numpy()
     f1_deceased_train = df['mean_train_f1_score_decease'].to_numpy()
-
+ 
     recall_deceased_test = df['mean_test_recall_Deceased'].to_numpy()
     recall_deceased_train = df['mean_train_recall_Deceased'].to_numpy()
-
+ 
+    recall_overall_test = df['mean_test_recall'].to_numpy()
+    recall_overall_train = df['mean_train_recall'].to_numpy()
+ 
     accuracy_train = df['mean_test_Accuracy'].to_numpy()
     accuracy_test = df['mean_train_Accuracy'].to_numpy()
-
+ 
     tuned = list(zip(df['param_max_depth'], df['param_min_samples_split'], df['param_n_estimators']))
     params = ['{}, {}, {}'.format(x,y,z) for x,y,z in tuned]
-
-
+ 
+ 
     df = pd.read_csv('../results/Random_Forest_Tuning2.csv')
     f1_deceased_test2 = df['mean_test_f1_score_decease'].to_numpy()
     f1_deceased_train2 = df['mean_train_f1_score_decease'].to_numpy()
-
+ 
     recall_deceased_test2 = df['mean_test_recall_Deceased'].to_numpy()
     recall_deceased_train2 = df['mean_train_recall_Deceased'].to_numpy()
-
+ 
+    recall_overall_test2 = df['mean_test_recall'].to_numpy()
+    recall_overall_train2 = df['mean_train_recall'].to_numpy()
+ 
     accuracy_test2 = df['mean_test_Accuracy'].to_numpy()
     accuracy_train2 = df['mean_train_Accuracy'].to_numpy()
-
+ 
     f1_deceased_test = np.concatenate( (f1_deceased_test, f1_deceased_test2) , axis = 0)
     f1_deceased_train = np.concatenate( (f1_deceased_train, f1_deceased_train2) ,  axis = 0)
-
+ 
     recall_deceased_test = np.concatenate( (recall_deceased_test, recall_deceased_test2) , axis = 0)
     recall_deceased_train = np.concatenate( (recall_deceased_train, recall_deceased_train2) ,  axis = 0)
-
+ 
+    recall_overall_test = np.concatenate( (recall_overall_test, recall_overall_test2) , axis = 0)
+    recall_overall_train = np.concatenate( (recall_overall_train, recall_overall_train2) ,  axis = 0)
+ 
     accuracy_test = np.concatenate( (accuracy_test, accuracy_test2) , axis = 0)
     accuracy_train = np.concatenate( (accuracy_train, accuracy_train2) ,  axis = 0)
-    
-
+ 
+ 
     tuned = list(zip(df['param_max_depth'], df['param_min_samples_split'], df['param_n_estimators']))
     params2 = ['{}, {}, {}'.format(x,y,z) for x,y,z in tuned]
     params = np.concatenate((params, params2), axis = 0)
-    
+ 
     param_label = '(Max_Depth, Min_Samples_Split, N_Estimators)'
     print("plotting...")
     plt.figure()
@@ -532,8 +541,8 @@ def plot_ranforest_data():
     plt.tight_layout()
     f1score_save = '../plots/' + 'RandomForest' + '_F1Score_plot.png'
     plt.savefig(f1score_save)
-
-    
+ 
+ 
     plt.figure()
     plt.title("Random Forest: Recall deceased")
     plt.xlabel(param_label)
@@ -543,9 +552,9 @@ def plot_ranforest_data():
     plt.xticks(rotation=90)
     plt.legend()
     plt.tight_layout()
-    recall_save = '../plots/' + 'RandomForest' + '_Recall_plot.png'
+    recall_save = '../plots/' + 'RandomForest' + '_RecallDeceased_plot.png'
     plt.savefig(recall_save)
-
+ 
     plt.figure()
     plt.title("Random Forest: Accuracy ")
     plt.xlabel(param_label)
@@ -557,7 +566,20 @@ def plot_ranforest_data():
     plt.tight_layout()
     accuracy_save = '../plots/' + 'RandomForest' + '_accuracy_plot.png'
     plt.savefig(accuracy_save)
-
+ 
+ 
+    plt.figure()
+    plt.title("Random Forest: Overall Recall ")
+    plt.xlabel(param_label)
+    plt.ylabel("Overall Recall")
+    plt.plot(params, recall_overall_test, color = "blue", label = 'test')
+    plt.plot(params, recall_overall_train, color = "orange", label = 'train')
+    plt.xticks(rotation=90)
+    plt.legend()
+    plt.tight_layout()
+    overall_recall_save = '../plots/' + 'RandomForest' + '_OverallRecall_plot.png'
+    plt.savefig(overall_recall_save)
+ 
     plt.show()
 
 
