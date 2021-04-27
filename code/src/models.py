@@ -318,7 +318,7 @@ def lgbm_predict(x_train, y_train, x_val, y_val, test_data):
         f_output.write(data)
 
 ################ LINEAR SVC MODEL ################
- 
+
 def linearSVMModelSave(x_train, y_train, x_val, y_val):
     # from https://scikit-learn.org/stable/modules/generated/sklearn.svm.LinearSVC.html
     # from https://stackoverflow.com/questions/31617530/multiclass-linear-svm-in-python-that-return-probability
@@ -367,10 +367,19 @@ def overfittingLinearSVCcheck(x_train, y_train, x_val, y_val):
 def runLinearSVC_hypertuned(x_train, y_train, x_val, y_val):
     clf = loadModel(pkl_linearSVC_filename)
     gridParams = {
+        "estimator__penalty" : ['l1'],
         "estimator__C" : [0.01, 0.1, 1],
-        "estimator__tol" : [0.00001, 0.0001, 0.001],
+        "estimator__tol" : [0.0001, 0.001, 0.01],
         "estimator__class_weight" : ['balanced', None]
     }
+    # gridParams = {
+    #     "estimator__penalty" : ['l1', 'l2'],
+    #     "estimator__C" : [0.1],
+    #     "estimator__tol" : [0.001, 0.01, 0.1],
+    #     "estimator__class_weight" : ['balanced'],
+    #     "estimator__intercept_scaling" : [0.1, 1, 2],
+    #     "estimator__max_iter" : [1000, 5000]
+    # }
  
     custom_scoring = {
         "recall":make_scorer(recall_score, average = 'macro'),
@@ -382,6 +391,7 @@ def runLinearSVC_hypertuned(x_train, y_train, x_val, y_val):
     grid = GridSearchCV(clf, gridParams, verbose = 3, cv = 5, refit = False, scoring = custom_scoring, return_train_score= True)
     model = grid.fit(x_train, y_train)
     pd.DataFrame(grid.cv_results_).to_csv("../results/linearSVC_tuning.csv")
+    # pd.DataFrame(grid.cv_results_).to_csv("../results/linearSVC_tuning_extra_params.csv")
     display(pd.DataFrame(grid.cv_results_))
 
 ################ RANDOM FOREST MODEL ################

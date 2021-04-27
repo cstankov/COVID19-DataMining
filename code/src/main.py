@@ -57,7 +57,7 @@ def main():
     # runLinearSVCClassifier(x_train, y_train, x_val, y_val)
     # overfittingLinearSVCcheck(x_train, y_train, x_val, y_val)
     # runLinearSVC_hypertuned(x_train, y_train, x_val, y_val)
-    #plot_result("LinearSVC", "../results/linearSVC_tuning.csv", x_train, y_train, x_val, y_val, test_data)
+    # plot_result("LinearSVC", "../results/linearSVC_tuning.csv", x_train, y_train, x_val, y_val, test_data)
     
     #randomForests
     #The pkl model was too large for git buffers so I reduced the forest to only 1 tree
