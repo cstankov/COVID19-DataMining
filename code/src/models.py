@@ -17,7 +17,6 @@ def splitForModel(test_data, train_data, val_data, return_numpy = True, convert_
     val_cpy.drop(['Source'], axis = 1, inplace = True)
     test_cpy.drop(['Source'], axis = 1, inplace = True)
     
-    print("Doing for OUTCOME")
     train_cpy['Outcome'].replace({'deceased':0, 'hospitalized':1, 'nonhospitalized':2, 'recovered':3},inplace=True)
     val_cpy['Outcome'].replace({'deceased':0, 'hospitalized':1, 'nonhospitalized':2, 'recovered':3},inplace=True)
     categorical_cols = ["Sex",  "Province_State", "Country", "Combined_Key", "Date_Confirmation"]
@@ -310,7 +309,7 @@ def lgbm_predict(x_train, y_train, x_val, y_val, test_data):
   
 
 ################ LINEAR SVC MODEL ################
- 
+
 def linearSVMModelSave(x_train, y_train, x_val, y_val):
     # from https://scikit-learn.org/stable/modules/generated/sklearn.svm.LinearSVC.html
     # from https://stackoverflow.com/questions/31617530/multiclass-linear-svm-in-python-that-return-probability
@@ -359,10 +358,19 @@ def overfittingLinearSVCcheck(x_train, y_train, x_val, y_val):
 def runLinearSVC_hypertuned(x_train, y_train, x_val, y_val):
     clf = loadModel(pkl_linearSVC_filename)
     gridParams = {
+        "estimator__penalty" : ['l1'],
         "estimator__C" : [0.01, 0.1, 1],
-        "estimator__tol" : [0.00001, 0.0001, 0.001],
+        "estimator__tol" : [0.0001, 0.001, 0.01],
         "estimator__class_weight" : ['balanced', None]
     }
+    # gridParams = {
+    #     "estimator__penalty" : ['l1', 'l2'],
+    #     "estimator__C" : [0.1],
+    #     "estimator__tol" : [0.001, 0.01, 0.1],
+    #     "estimator__class_weight" : ['balanced'],
+    #     "estimator__intercept_scaling" : [0.1, 1, 2],
+    #     "estimator__max_iter" : [1000, 5000]
+    # }
  
     custom_scoring = {
         "recall":make_scorer(recall_score, average = 'macro'),
@@ -374,6 +382,7 @@ def runLinearSVC_hypertuned(x_train, y_train, x_val, y_val):
     grid = GridSearchCV(clf, gridParams, verbose = 3, cv = 5, refit = False, scoring = custom_scoring, return_train_score= True)
     model = grid.fit(x_train, y_train)
     pd.DataFrame(grid.cv_results_).to_csv("../results/linearSVC_tuning.csv")
+    # pd.DataFrame(grid.cv_results_).to_csv("../results/linearSVC_tuning_extra_params.csv")
     display(pd.DataFrame(grid.cv_results_))
 
 ################ RANDOM FOREST MODEL ################
@@ -410,8 +419,10 @@ def random_forest_test_hparam(x_train, y_train, x_val, y_val, test_data):
     max_depth = [x for x in range(20, 35, 5) ]
     n_estimators = [x for x in range(50, 175, 50) ]
     min_samples_split = [2, 4]
-    # max_depth = [55]
-    # n_estimators = [75, 100]
+
+    #Theese parameters created the second randomforestTuning.csv
+    # max_depth = [55, 75, 100]
+    # n_estimators = [75, 50]
     # min_samples_split = [2]
 
 
@@ -423,10 +434,6 @@ def random_forest_test_hparam(x_train, y_train, x_val, y_val, test_data):
                   'max_depth': max_depth,
                   'min_samples_split': min_samples_split
     }
-    # param_grid = { 'n_estimators': [10],
-    #               'max_depth': [10],
-    #               'min_samples_split': [2]
-    # }
 
 
     ###################custom scoring ####################
@@ -470,40 +477,89 @@ def random_forest_predict(x_train, y_train, test_data): # Testing thinking rando
     check_if_file_valid(predict_fp)
     return        
 
+
+
+
 def plot_ranforest_data():
-    df = pd.read_csv('../results/Random_Forest_GSCVDepth.csv')
+    df = pd.read_csv('../results/Random_Forest_Tuning.csv')
     f1_deceased_test = df['mean_test_f1_score_decease'].to_numpy()
     f1_deceased_train = df['mean_train_f1_score_decease'].to_numpy()
 
     recall_deceased_test = df['mean_test_recall_Deceased'].to_numpy()
-    recall_deceased_train = df['mean_test_recall_Deceased'].to_numpy()
+    recall_deceased_train = df['mean_train_recall_Deceased'].to_numpy()
 
     accuracy_train = df['mean_test_Accuracy'].to_numpy()
     accuracy_test = df['mean_train_Accuracy'].to_numpy()
-    print(accuracy_test)
+
+    tuned = list(zip(df['param_max_depth'], df['param_min_samples_split'], df['param_n_estimators']))
+    params = ['{}, {}, {}'.format(x,y,z) for x,y,z in tuned]
+
+
+    df = pd.read_csv('../results/Random_Forest_Tuning2.csv')
+    f1_deceased_test2 = df['mean_test_f1_score_decease'].to_numpy()
+    f1_deceased_train2 = df['mean_train_f1_score_decease'].to_numpy()
+
+    recall_deceased_test2 = df['mean_test_recall_Deceased'].to_numpy()
+    recall_deceased_train2 = df['mean_train_recall_Deceased'].to_numpy()
+
+    accuracy_test2 = df['mean_test_Accuracy'].to_numpy()
+    accuracy_train2 = df['mean_train_Accuracy'].to_numpy()
+
+    f1_deceased_test = np.concatenate( (f1_deceased_test, f1_deceased_test2) , axis = 0)
+    f1_deceased_train = np.concatenate( (f1_deceased_train, f1_deceased_train2) ,  axis = 0)
+
+    recall_deceased_test = np.concatenate( (recall_deceased_test, recall_deceased_test2) , axis = 0)
+    recall_deceased_train = np.concatenate( (recall_deceased_train, recall_deceased_train2) ,  axis = 0)
+
+    accuracy_test = np.concatenate( (accuracy_test, accuracy_test2) , axis = 0)
+    accuracy_train = np.concatenate( (accuracy_train, accuracy_train2) ,  axis = 0)
     
-    params = df['params'].to_numpy()
+
+    tuned = list(zip(df['param_max_depth'], df['param_min_samples_split'], df['param_n_estimators']))
+    params2 = ['{}, {}, {}'.format(x,y,z) for x,y,z in tuned]
+    params = np.concatenate((params, params2), axis = 0)
+    
+    param_label = '(Max_Depth, Min_Samples_Split, N_Estimators)'
     print("plotting...")
-    plt.figure(1)
+    plt.figure()
     plt.title("Random Forest: F1_Score on Deceased ")
+    plt.xlabel(param_label)
+    plt.ylabel("F1_Score")
     plt.plot(params, f1_deceased_test, color = "blue", label='test')
     plt.plot(params, f1_deceased_train, color = "orange", label = "train")
     plt.xticks(rotation=90)
     plt.legend()
-    plt.show()
-    
-    plt.figure(2)
-    plt.title("Random Forest: Recall deceased")
-    plt.plot(params, recall_deceased_test, color = "blue")
-    plt.plot(params, recall_deceased_train, color = "orange")
-    plt.legend()
+    plt.tight_layout()
+    f1score_save = '../plots/' + 'RandomForest' + '_F1Score_plot.png'
+    plt.savefig(f1score_save)
 
-    plt.figure(3)
-    plt.title("Random Forest: Accuracy ")
-    plt.plot(params, accuracy_test, color = "blue")
-    plt.plot(params, accuracy_train, color = "orange")
+    
+    plt.figure()
+    plt.title("Random Forest: Recall deceased")
+    plt.xlabel(param_label)
+    plt.ylabel("Recall")
+    plt.plot(params, recall_deceased_test, color = "blue",  label = 'test')
+    plt.plot(params, recall_deceased_train, color = "orange", label = 'train')
+    plt.xticks(rotation=90)
     plt.legend()
-    return
+    plt.tight_layout()
+    recall_save = '../plots/' + 'RandomForest' + '_Recall_plot.png'
+    plt.savefig(recall_save)
+
+    plt.figure()
+    plt.title("Random Forest: Accuracy ")
+    plt.xlabel(param_label)
+    plt.ylabel("Accuracy")
+    plt.plot(params, accuracy_test, color = "blue", label = 'test')
+    plt.plot(params, accuracy_train, color = "orange", label = 'train')
+    plt.xticks(rotation=90)
+    plt.legend()
+    plt.tight_layout()
+    accuracy_save = '../plots/' + 'RandomForest' + '_accuracy_plot.png'
+    plt.savefig(accuracy_save)
+
+    plt.show()
+
 
 def check_if_file_valid(filename):
     assert filename.endswith('predictions.txt'), 'Incorrect filename'
