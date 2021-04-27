@@ -46,31 +46,27 @@ def main():
     x_train, y_train, x_val, y_val, test_data = splitForModel(test_data=test_data_processed, train_data = train_data, val_data = val_data)
 
     # # LIGHTGBM    
-    # LGBMModelSave(x_train, y_train, x_val, y_val, test_data)
-    # runLGBM(x_train, y_train, x_val, y_val, test_data)
-    # overfitting_check(x_train, y_train, x_val, y_val, test_data)
-    # runLGBM_hypertuned(x_train, y_train, x_val, y_val, test_data)
-    # plot_result("LGBM", "../results/LGBM_tuning.csv", x_train, y_train, x_val, y_val, test_data)
+    LGBMModelSave(x_train, y_train, x_val, y_val, test_data)
+    runLGBM(x_train, y_train, x_val, y_val, test_data)
+    overfitting_check(x_train, y_train, x_val, y_val, test_data)
+    runLGBM_hypertuned(x_train, y_train, x_val, y_val, test_data)
+    plot_result("LGBM", "../results/LGBM_tuning.csv", x_train, y_train, x_val, y_val, test_data)
     
     # # Linear SVC
-    # linearSVMModelSave(x_train, y_train, x_val, y_val)
-    # runLinearSVCClassifier(x_train, y_train, x_val, y_val)
-    # overfittingLinearSVCcheck(x_train, y_train, x_val, y_val)
-    # runLinearSVC_hypertuned(x_train, y_train, x_val, y_val)
-    #plot_result("LinearSVC", "../results/linearSVC_tuning.csv", x_train, y_train, x_val, y_val, test_data)
+    linearSVMModelSave(x_train, y_train, x_val, y_val)
+    runLinearSVCClassifier(x_train, y_train, x_val, y_val)
+    overfittingLinearSVCcheck(x_train, y_train, x_val, y_val)
+    runLinearSVC_hypertuned(x_train, y_train, x_val, y_val)
+    plot_result("LinearSVC", "../results/linearSVC_tuning.csv", x_train, y_train, x_val, y_val, test_data)
     
     #randomForests
     #The pkl model was too large for git buffers so I reduced the forest to only 1 tree
     #To change this, please go to models.py, line 275 and change the parameter
-    # randomForestModelx_train, y_train, x_val, y_val, test_data)
-    # runRandomForestClassifier(x_train, y_train, x_val, y_val, test_data)
-    #random_forest_test_hparam(x_train, y_train, x_val, y_val, test_data)
+    randomForestModelx_train, y_train, x_val, y_val, test_data)
+    runRandomForestClassifier(x_train, y_train, x_val, y_val, test_data)
+    random_forest_test_hparam(x_train, y_train, x_val, y_val, test_data)
     random_forest_predict(x_train=x_train, y_train=y_train, test_data=test_data)
-
-    #For the best model
-    # lgbm_predict(x_train, y_train, x_val, y_val, test_data)
-    # print("checking...")
-    # check_if_file_valid('../results/predictions.txt')   
+    check_if_file_valid('../results/predictions.txt')   
 
 if __name__ == "__main__":
     main()

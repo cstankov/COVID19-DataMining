@@ -280,19 +280,9 @@ def runLGBM_hypertuned(x_train, y_train, x_val, y_val, test_data):
         'n_estimators': [100, 200, 300],
     }
 
-    gridParams2 = {
-        'objective': ['multiclass'],
-        'num_class' : [4],
-        'learning_rate': [0.1, 0.025],
-        'num_leaves': [81, 91],
-        'max_bin': [100, 120],
-        'boosting_type': ['gbdt'],
-        'n_estimators': [100, 200, 300],
-    }
-
-    lgbm_grid = GridSearchCV(clf, gridParams2, verbose = 3, cv = 5, refit = False, scoring = custom_scoring, return_train_score= True) #changed to 3 fold to make it faster
+    lgbm_grid = GridSearchCV(clf, gridParams_best, verbose = 3, cv = 5, refit = 'f1_score_decease', scoring = custom_scoring, return_train_score= True) #changed to 3 fold to make it faster
     model = lgbm_grid.fit(x_train, y_train)
-    pd.DataFrame(lgbm_grid.cv_results_).to_csv("../results/LGBM_tuning2.csv")
+    pd.DataFrame(lgbm_grid.cv_results_).to_csv("../results/LGBM_tuning.csv")
     display(pd.DataFrame(lgbm_grid.cv_results_))
 
 def lgbm_predict(x_train, y_train, x_val, y_val, test_data):
@@ -317,6 +307,7 @@ def lgbm_predict(x_train, y_train, x_val, y_val, test_data):
  
     with open(filename, 'w') as f_output:    
         f_output.write(data)
+  
 
 ################ LINEAR SVC MODEL ################
  
